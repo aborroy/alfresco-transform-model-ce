@@ -23,6 +23,7 @@ public class InternalContext implements Serializable
     private int attemptedRetries;
     private String currentSourceMediaType;
     private String currentTargetMediaType;
+    private String replyToDestination;
     private Long currentSourceSize;
     private Map<String, String> transformRequestOptions = new HashMap<>();
 
@@ -66,6 +67,27 @@ public class InternalContext implements Serializable
         this.currentTargetMediaType = currentTargetMediaType;
     }
 
+    /**
+     * Gets the reply to destination name.
+     *
+     * @return replyToDestination
+     */
+    public String getReplyToDestination()
+    {
+        return replyToDestination;
+    }
+
+    /**
+     * Sets the reply to destination name.
+     * Note: replyToDestination is populated from jmsMessage replyTo field sent by T-Client
+     *
+     * @param replyToDestination reply to destination name
+     */
+    public void setReplyToDestination(String replyToDestination)
+    {
+        this.replyToDestination = replyToDestination;
+    }
+
     public Long getCurrentSourceSize()
     {
         return currentSourceSize;
@@ -94,6 +116,7 @@ public class InternalContext implements Serializable
                ", attemptedRetries=" + attemptedRetries +
                ", currentSourceMediaType='" + currentSourceMediaType + '\'' +
                ", currentTargetMediaType='" + currentTargetMediaType + '\'' +
+               ", replyToDestination='" + replyToDestination + '\'' +
                ", currentSourceSize=" + currentSourceSize +
                ", transformRequestOptions=" + transformRequestOptions +
                '}';

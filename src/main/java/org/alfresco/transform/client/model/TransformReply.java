@@ -186,6 +186,12 @@ public class TransformReply implements Serializable
             return this;
         }
 
+        public Builder withInternalContext(final InternalContext internalContext)
+        {
+            reply.internalContext = internalContext;
+            return this;
+        }
+
         public TransformReply build()
         {
             return reply;
