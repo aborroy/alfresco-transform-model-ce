@@ -21,39 +21,41 @@
  */
 package org.alfresco.transform.client.model.config;
 
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
 /**
- * Represents a group of one or more options. If the group is optional, child options that are marked as required are
- * only required if any child in the group is supplied by the client. If the group is required, child options are
- * optional or required based on their own setting alone.
- *
- * In a pipeline transformation, a group of options
+ * Transform Configuration with multiple {@link Transformer}s and {@link TransformOption}s.
+ * It can be used for one or more Transformers.
  */
-public class TransformOptionGroup extends AbstractTransformOption
+public class TransformConfig
 {
-    private Set<TransformOption> transformOptions = new HashSet<>();
+    private Map<String, Set<TransformOption>> transformOptions = new HashMap<>();
+    
+    private List<Transformer> transformers = new ArrayList<>();
 
-    public TransformOptionGroup()
-    {
-    }
-
-    public TransformOptionGroup(boolean required, Set<TransformOption> transformOptions)
-    {
-        super(required);
-        this.transformOptions = transformOptions;
-    }
-
-    public Set<TransformOption> getTransformOptions()
+    public Map<String, Set<TransformOption>> getTransformOptions()
     {
         return transformOptions;
     }
 
-    public void setTransformOptions(Set<TransformOption> transformOptions)
+    public void setTransformOptions(Map<String, Set<TransformOption>> transformOptions)
     {
         this.transformOptions = transformOptions;
+    }
+
+    public List<Transformer> getTransformers()
+    {
+        return transformers;
+    }
+
+    public void setTransformers(List<Transformer> transformers)
+    {
+        this.transformers = transformers;
     }
 
     @Override
@@ -61,22 +63,23 @@ public class TransformOptionGroup extends AbstractTransformOption
     {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-        TransformOptionGroup that = (TransformOptionGroup) o;
-        return Objects.equals(transformOptions, that.transformOptions);
+        TransformConfig that = (TransformConfig) o;
+        return Objects.equals(transformOptions, that.transformOptions) &&
+               Objects.equals(transformers, that.transformers);
     }
 
     @Override
     public int hashCode()
     {
-        return Objects.hash(super.hashCode(), transformOptions);
+        return Objects.hash(transformOptions, transformers);
     }
 
     @Override
     public String toString()
     {
-        return "TransformOptionGroup{" +
+        return "TransformConfig{" +
                "transformOptions=" + transformOptions +
+               ", transformers=" + transformers +
                '}';
     }
 }

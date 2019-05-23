@@ -1,31 +1,31 @@
 /*
  * #%L
- * Alfresco Repository
+ * Alfresco Transform Model
  * %%
- * Copyright (C) 2005 - 2018 Alfresco Software Limited
+ * Copyright (C) 2005 - 2019 Alfresco Software Limited
  * %%
- * This file is part of the Alfresco software.
- * If the software was purchased under a paid Alfresco license, the terms of
- * the paid license agreement will prevail.  Otherwise, the software is
- * provided under the following open source license terms:
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
- * Alfresco is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Alfresco is distributed in the hope that it will be useful,
+ * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ * GNU General Lesser Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Alfresco. If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Lesser Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/lgpl-3.0.html>.
  * #L%
  */
 package org.alfresco.transform.client.model.config;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * Represents a set of transformations supported by the Transform Service that share the same transform options. Each
@@ -36,69 +36,113 @@ import java.util.List;
  * transformations which allows new transformations to be added without the need change client data structures other
  * than to define new name value pairs. For this to work the Transform Service defines unique names for each option.
  * <ul>
- *     <lI>name - is unique. The client should infer nothing from the name as it is simply a label.</lI>
- *     <li>version - of the transformer. The client should infer nothing from the value and should only use it
- *     in messages. There should only be one version supplied to the client for each name.</li>
- *     <li>transformOptions - a grouping of individual transformer transformOptions. The group may be optional and may
- *     contain nested transformOptions.</li>
+ * <li>transformerName - is unique. The client should infer nothing from the name as it is simply a label.</lI>
+ * <li>transformOptions - a grouping of individual transformer transformOptions. The group may be optional and may
+ * contain nested transformOptions.</li>
+ * </ul>
+ * For local transforms, this structure is extended when defining a pipeline transform.
+ * <ul>
+ * <li>transformerPipeline - an array of pairs of transformer name and target extension for each transformer in the
+ * pipeline. The last one should not have an extension as that is defined by the request and should be in the
+ * supported list.</li>
  * </ul>
  */
 public class Transformer
 {
-    private String name;
-    private String version;
-    private List<TransformOption> transformOptions;
-    private List<SupportedSourceAndTarget> supportedSourceAndTargetList;
+    private String transformerName;
+    private Set<String> transformOptions = new HashSet<>();
+    private Set<SupportedSourceAndTarget> supportedSourceAndTargetList = new HashSet<>();
+    private List<TransformStep> transformerPipeline = new ArrayList<>();
 
     public Transformer()
     {
     }
 
-    public Transformer(String name, String version, List<TransformOption> transformOptions, List<SupportedSourceAndTarget> supportedSourceAndTargetList)
+    public Transformer(String transformerName, Set<String> transformOptions,
+        Set<SupportedSourceAndTarget> supportedSourceAndTargetList)
     {
-        setName(name);
-        setVersion(version);
-        setTransformOptions(transformOptions);
-        setSupportedSourceAndTargetList(supportedSourceAndTargetList);
+        this.transformerName = transformerName;
+        this.transformOptions = transformOptions;
+        this.supportedSourceAndTargetList = supportedSourceAndTargetList;
     }
 
-    public String getName()
+    public Transformer(String transformerName, Set<String> transformOptions,
+        Set<SupportedSourceAndTarget> supportedSourceAndTargetList,
+        List<TransformStep> transformerPipeline)
     {
-        return name;
+        this(transformerName, transformOptions, supportedSourceAndTargetList);
+        this.transformerPipeline = transformerPipeline;
     }
 
-    public void setName(String name)
+    public String getTransformerName()
     {
-        this.name = name;
+        return transformerName;
     }
 
-    public String getVersion()
+    public void setTransformerName(String transformerName)
     {
-        return version;
+        this.transformerName = transformerName;
     }
 
-    public void setVersion(String version)
+    public List<TransformStep> getTransformerPipeline()
     {
-        this.version = version;
+        return transformerPipeline;
     }
 
-    public List<TransformOption> getTransformOptions()
+    public void setTransformerPipeline(List<TransformStep> transformerPipeline)
+    {
+        this.transformerPipeline = transformerPipeline;
+    }
+
+    public Set<String> getTransformOptions()
     {
         return transformOptions;
     }
 
-    public void setTransformOptions(List<TransformOption> transformOptions)
+    public void setTransformOptions(Set<String> transformOptions)
     {
         this.transformOptions = transformOptions;
     }
 
-    public List<SupportedSourceAndTarget> getSupportedSourceAndTargetList()
+    public Set<SupportedSourceAndTarget> getSupportedSourceAndTargetList()
     {
         return supportedSourceAndTargetList;
     }
 
-    public void setSupportedSourceAndTargetList(List<SupportedSourceAndTarget> supportedSourceAndTargetList)
+    public void setSupportedSourceAndTargetList(
+        Set<SupportedSourceAndTarget> supportedSourceAndTargetList)
     {
         this.supportedSourceAndTargetList = supportedSourceAndTargetList;
+    }
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Transformer that = (Transformer) o;
+        return Objects.equals(transformerName, that.transformerName) &&
+               Objects.equals(transformerPipeline, that.transformerPipeline) &&
+               Objects.equals(transformOptions, that.transformOptions) &&
+               Objects.equals(supportedSourceAndTargetList,
+                   that.supportedSourceAndTargetList);
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return Objects.hash(transformerName, transformerPipeline, transformOptions,
+            supportedSourceAndTargetList);
+    }
+
+    @Override
+    public String toString()
+    {
+        return "Transformer{" +
+               "transformerName='" + transformerName + '\'' +
+               ", transformerPipeline=" + transformerPipeline +
+               ", transformOptions=" + transformOptions +
+               ", supportedSourceAndTargetList=" + supportedSourceAndTargetList +
+               '}';
     }
 }

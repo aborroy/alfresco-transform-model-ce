@@ -24,30 +24,31 @@ package org.alfresco.transform.client.model.config;
 import java.util.Objects;
 
 /**
- * Represents a single transformation option.
+ * Abstract implementation of TransformOption.
  */
-public class TransformOptionValue extends AbstractTransformOption
+public abstract class AbstractTransformOption implements TransformOption
 {
-    private String name;
+    private boolean required;
 
-    public TransformOptionValue()
+    public AbstractTransformOption()
     {
     }
 
-    public TransformOptionValue(boolean required, String name)
+    public AbstractTransformOption(boolean required)
     {
-        super(required);
-        this.name = name;
+        this.required = required;
     }
 
-    public String getName()
+    @Override
+    public boolean isRequired()
     {
-        return name;
+        return required;
     }
 
-    public void setName(String name)
+    @Override
+    public void setRequired(boolean required)
     {
-        this.name = name;
+        this.required = required;
     }
 
     @Override
@@ -55,22 +56,21 @@ public class TransformOptionValue extends AbstractTransformOption
     {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
-        TransformOptionValue that = (TransformOptionValue) o;
-        return Objects.equals(name, that.name);
+        AbstractTransformOption that = (AbstractTransformOption) o;
+        return required == that.required;
     }
 
     @Override
     public int hashCode()
     {
-        return Objects.hash(super.hashCode(), name);
+        return Objects.hash(required);
     }
 
     @Override
     public String toString()
     {
-        return "TransformOptionValue{" +
-               "name='" + name + '\'' +
+        return "AbstractTransformOption{" +
+               "required=" + required +
                '}';
     }
 }

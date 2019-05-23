@@ -1,29 +1,27 @@
 /*
  * #%L
- * Alfresco Repository
+ * Alfresco Transform Model
  * %%
- * Copyright (C) 2005 - 2018 Alfresco Software Limited
+ * Copyright (C) 2005 - 2019 Alfresco Software Limited
  * %%
- * This file is part of the Alfresco software.
- * If the software was purchased under a paid Alfresco license, the terms of
- * the paid license agreement will prevail.  Otherwise, the software is
- * provided under the following open source license terms:
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  *
- * Alfresco is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Alfresco is distributed in the hope that it will be useful,
+ * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ * GNU General Lesser Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with Alfresco. If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU General Lesser Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/lgpl-3.0.html>.
  * #L%
  */
 package org.alfresco.transform.client.model.config;
+
+import java.util.Objects;
 
 /**
  * Represents a single source and target combination supported by a transformer. File extensions are used to keep the
@@ -31,29 +29,48 @@ package org.alfresco.transform.client.model.config;
  */
 public class SupportedSourceAndTarget
 {
-    private String sourceExt;
+    private String sourceMediaType;
+    private String targetMediaType;
     private long maxSourceSizeBytes = -1;
-    private String targetExt;
+    private int priority = 50;
 
     public SupportedSourceAndTarget()
     {
     }
 
-    public SupportedSourceAndTarget(String sourceExt, String targetExt, long maxSourceSizeBytes)
+    public SupportedSourceAndTarget(String sourceMediaType, String targetMediaType,
+        long maxSourceSizeBytes)
     {
-        setSourceExt(sourceExt);
-        setMaxSourceSizeBytes(maxSourceSizeBytes);
-        setTargetExt(targetExt);
+        this.sourceMediaType = sourceMediaType;
+        this.targetMediaType = targetMediaType;
+        this.maxSourceSizeBytes = maxSourceSizeBytes;
     }
 
-    public String getSourceExt()
+    public SupportedSourceAndTarget(String sourceMediaType, String targetMediaType,
+        long maxSourceSizeBytes, int priority)
     {
-        return sourceExt;
+        this(sourceMediaType, targetMediaType, maxSourceSizeBytes);
+        this.priority = priority;
     }
 
-    public void setSourceExt(String sourceExt)
+    public String getSourceMediaType()
     {
-        this.sourceExt = sourceExt;
+        return sourceMediaType;
+    }
+
+    public void setSourceMediaType(String sourceMediaType)
+    {
+        this.sourceMediaType = sourceMediaType;
+    }
+
+    public String getTargetMediaType()
+    {
+        return targetMediaType;
+    }
+
+    public void setTargetMediaType(String targetMediaType)
+    {
+        this.targetMediaType = targetMediaType;
     }
 
     public long getMaxSourceSizeBytes()
@@ -66,13 +83,42 @@ public class SupportedSourceAndTarget
         this.maxSourceSizeBytes = maxSourceSizeBytes;
     }
 
-    public String getTargetExt()
+    public int getPriority()
     {
-        return targetExt;
+        return priority;
     }
 
-    public void setTargetExt(String targetExt)
+    public void setPriority(int priority)
     {
-        this.targetExt = targetExt;
+        this.priority = priority;
+    }
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SupportedSourceAndTarget that = (SupportedSourceAndTarget) o;
+        return maxSourceSizeBytes == that.maxSourceSizeBytes &&
+               priority == that.priority &&
+               Objects.equals(sourceMediaType, that.sourceMediaType) &&
+               Objects.equals(targetMediaType, that.targetMediaType);
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return Objects.hash(sourceMediaType, targetMediaType, maxSourceSizeBytes, priority);
+    }
+
+    @Override
+    public String toString()
+    {
+        return "SupportedSourceAndTarget{" +
+               "sourceMediaType='" + sourceMediaType + '\'' +
+               ", targetMediaType='" + targetMediaType + '\'' +
+               ", maxSourceSizeBytes=" + maxSourceSizeBytes +
+               ", priority=" + priority +
+               '}';
     }
 }
