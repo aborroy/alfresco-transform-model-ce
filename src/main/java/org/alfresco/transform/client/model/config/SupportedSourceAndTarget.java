@@ -121,4 +121,47 @@ public class SupportedSourceAndTarget
                ", priority=" + priority +
                '}';
     }
+
+    public static Builder builder()
+    {
+        return new Builder();
+    }
+
+    public static class Builder
+    {
+        private SupportedSourceAndTarget supportedSourceAndTarget = new SupportedSourceAndTarget();
+
+        private Builder()
+        {
+        }
+
+        public SupportedSourceAndTarget build()
+        {
+            return supportedSourceAndTarget;
+        }
+
+        public Builder withSourceMediaType(final String sourceMediaType)
+        {
+            supportedSourceAndTarget.sourceMediaType = sourceMediaType;
+            return this;
+        }
+
+        public Builder withTargetMediaType(final String targetMediaType)
+        {
+            supportedSourceAndTarget.targetMediaType = targetMediaType;
+            return this;
+        }
+
+        public Builder withMaxSourceSizeBytes(final long maxSourceSizeBytes)
+        {
+            supportedSourceAndTarget.maxSourceSizeBytes = maxSourceSizeBytes;
+            return this;
+        }
+
+        public Builder withPriority(final int priority)
+        {
+            supportedSourceAndTarget.priority = priority;
+            return this;
+        }
+    }
 }

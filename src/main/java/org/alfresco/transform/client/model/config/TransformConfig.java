@@ -82,4 +82,34 @@ public class TransformConfig
                ", transformers=" + transformers +
                '}';
     }
+
+    public static Builder builder()
+    {
+        return new Builder();
+    }
+
+    public static class Builder
+    {
+        private TransformConfig transformConfig;
+
+        private Builder() {}
+
+        public TransformConfig build()
+        {
+            return transformConfig;
+        }
+
+        public Builder withTransformOptions(
+            final Map<String, Set<TransformOption>> transformOptions)
+        {
+            transformConfig.transformOptions = transformOptions;
+            return this;
+        }
+
+        public Builder withTransformers(final List<Transformer> transformers)
+        {
+            transformConfig.transformers = transformers;
+            return this;
+        }
+    }
 }

@@ -145,4 +145,48 @@ public class Transformer
                ", supportedSourceAndTargetList=" + supportedSourceAndTargetList +
                '}';
     }
+
+    public static Builder builder()
+    {
+        return new Builder();
+    }
+
+    public static class Builder
+    {
+        private Transformer transformer = new Transformer();
+
+        private Builder()
+        {
+        }
+
+        public Transformer build()
+        {
+            return transformer;
+        }
+
+        public Builder withTransformerName(final String transformerName)
+        {
+            transformer.transformerName = transformerName;
+            return this;
+        }
+
+        public Builder withTransformerPipeline(final List<TransformStep> transformerPipeline)
+        {
+            transformer.transformerPipeline = transformerPipeline;
+            return this;
+        }
+
+        public Builder withTransformOptions(final Set<String> transformOptions)
+        {
+            transformer.transformOptions = transformOptions;
+            return this;
+        }
+
+        public Builder withSupportedSourceAndTargetList(
+            final Set<SupportedSourceAndTarget> supportedSourceAndTargetList)
+        {
+            transformer.supportedSourceAndTargetList = supportedSourceAndTargetList;
+            return this;
+        }
+    }
 }
