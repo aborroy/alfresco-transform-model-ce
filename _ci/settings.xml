@@ -58,7 +58,7 @@
         <!-- private docker registry-->
         <server>
             <id>quay.io</id>
-            <username>alfresco+travis</username>
+            <username>alfresco+bamboo</username>
             <password>${env.QUAY_PASSWORD}</password>
         </server>
     </servers>
