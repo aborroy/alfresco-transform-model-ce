@@ -32,12 +32,12 @@
 
     <distributionManagement>
         <snapshotRepository>
-            <id>alfresco-enterprise-snapshots</id>
-            <url>https://artifacts.alfresco.com/nexus/content/repositories/enterprise-snapshots</url>
+            <id>alfresco-public-snapshots</id>
+            <url>https://artifacts.alfresco.com/nexus/content/repositories/snapshots</url>
         </snapshotRepository>
         <repository>
-            <id>alfresco-enterprise-releases</id>
-            <url>https://artifacts.alfresco.com/nexus/content/repositories/enterprise-releases</url>
+            <id>alfresco-public</id>
+            <url>https://artifacts.alfresco.com/nexus/content/repositories/releases</url>
         </repository>
     </distributionManagement>
 
