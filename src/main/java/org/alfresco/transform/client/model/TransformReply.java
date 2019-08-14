@@ -144,6 +144,8 @@ public class TransformReply implements Serializable
     {
         private final TransformReply reply = new TransformReply();
 
+        private Builder() {}
+
         public Builder withRequestId(final String requestId)
         {
             reply.requestId = requestId;

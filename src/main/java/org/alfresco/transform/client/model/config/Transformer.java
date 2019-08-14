@@ -155,9 +155,7 @@ public class Transformer
     {
         private Transformer transformer = new Transformer();
 
-        private Builder()
-        {
-        }
+        private Builder() {}
 
         public Transformer build()
         {

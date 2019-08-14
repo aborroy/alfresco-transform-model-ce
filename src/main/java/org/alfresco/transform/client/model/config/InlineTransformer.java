@@ -155,9 +155,7 @@ public class InlineTransformer
     {
         private InlineTransformer transformer = new InlineTransformer();
 
-        private Builder()
-        {
-        }
+        private Builder() { }
 
         public InlineTransformer build()
         {
