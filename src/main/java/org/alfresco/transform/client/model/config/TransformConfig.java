@@ -90,7 +90,7 @@ public class TransformConfig
 
     public static class Builder
     {
-        private TransformConfig transformConfig = new TransformConfig();
+        private final TransformConfig transformConfig = new TransformConfig();
 
         private Builder() {}
 

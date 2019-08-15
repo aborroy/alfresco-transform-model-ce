@@ -46,7 +46,7 @@ public class TransformRequestValidator implements Validator
                     "sourceReference cannot be null or empty");
             }
             Long sourceSize = request.getSourceSize();
-            if (sourceSize == null || sourceSize.longValue() <= 0)
+            if (sourceSize == null || sourceSize <= 0)
             {
                 errors.rejectValue("sourceSize", null,
                     "sourceSize cannot be null or have its value smaller than 0");

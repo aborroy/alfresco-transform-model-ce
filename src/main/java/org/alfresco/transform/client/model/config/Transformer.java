@@ -153,7 +153,7 @@ public class Transformer
 
     public static class Builder
     {
-        private Transformer transformer = new Transformer();
+        private final Transformer transformer = new Transformer();
 
         private Builder() {}
 

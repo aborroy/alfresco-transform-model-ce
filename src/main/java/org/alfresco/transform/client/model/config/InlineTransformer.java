@@ -54,9 +54,7 @@ public class InlineTransformer
     private Set<SupportedSourceAndTarget> supportedSourceAndTargetList = new HashSet<>();
     private List<TransformStep> transformerPipeline = new ArrayList<>();
 
-    public InlineTransformer()
-    {
-    }
+    public InlineTransformer() {}
 
     public InlineTransformer(String transformerName, Set<TransformOption> transformOptions,
         Set<SupportedSourceAndTarget> supportedSourceAndTargetList)
@@ -153,7 +151,7 @@ public class InlineTransformer
 
     public static class Builder
     {
-        private InlineTransformer transformer = new InlineTransformer();
+        private final InlineTransformer transformer = new InlineTransformer();
 
         private Builder() { }
 
