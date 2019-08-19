@@ -43,11 +43,13 @@ import java.util.Set;
  *     <li>transformOptions - a grouping of individual transformer transformOptions. The group may be optional and may
  *     contain nested transformOptions.</li>
  * </ul>
- * For local transforms, this structure is extended when defining a pipeline transform.
+ * For local transforms, this structure is extended when defining a pipeline transform and failover transform.
  * <ul>
  * <li>transformerPipeline - an array of pairs of transformer name and target extension for each transformer in the
  * pipeline. The last one should not have an extension as that is defined by the request and should be in the
  * supported list.</li>
+ * <li>transformerFailover - an array of failover definitions used in case of a fail transformation to pass a document
+ * to a sequence of transforms until one succeeds.</li>
  * </ul>
  */
 public class Transformer
