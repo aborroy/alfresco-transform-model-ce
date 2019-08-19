@@ -182,6 +182,8 @@ public class TransformRequest implements Serializable
     {
         private final TransformRequest request = new TransformRequest();
 
+        private Builder() {}
+
         public Builder withRequestId(final String requestId)
         {
             request.requestId = requestId;

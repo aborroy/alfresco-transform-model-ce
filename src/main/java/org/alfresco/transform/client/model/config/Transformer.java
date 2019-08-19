@@ -28,23 +28,28 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * Represents a set of transformations supported by the Transform Service that share the same transform options. Each
- * may be an actual transformer or the amalgamation of multiple transformers. It is possible that more than one
- * transformer may able to perform a transformation from one mimetype to another. The actual selection of transformer
- * is up to the Transform Service to decide. Clients may use TransformServiceRegistry#isSupported to decide
- * if they should send a request to the Transform Service. As a result clients have a simple generic view of
- * transformations which allows new transformations to be added without the need change client data structures other
- * than to define new name value pairs. For this to work the Transform Service defines unique names for each option.
+ * Represents a set of transformations supported by the Transform Service or Local Transform Service Registry that
+ * share the same transform options. Each may be an actual transformer, a pipeline of multiple transformers or a list
+ * of failover transforms. It is possible that more than one transformer may able to perform a transformation from one
+ * mimetype to another. The actual selection of transformer is up to the Transform Service or Local Transform Service
+ * Registry to decide. Clients may use
+ * {@link TransformServiceRegistry#isSupported(String, long, String, java.util.Map, String)} to decide
+ * if they should send a request to the service. As a result clients have a simple generic view of transformations which
+ * allows new transformations to be added without the need to change client data structures other than to define new
+ * name value pairs. For this to work the Transform Service defines unique names for each option.
  * <ul>
- * <li>transformerName - is unique. The client should infer nothing from the name as it is simply a label.</lI>
- * <li>transformOptions - a grouping of individual transformer transformOptions. The group may be optional and may
- * contain nested transformOptions.</li>
+ *     <li>transformerName - is optional but if supplied should be unique. The client should infer nothing from the name
+ *     as it is simply a label, but the Local Transform Service Registry will use the name in pipelines.</lI>
+ *     <li>transformOptions - a grouping of individual transformer transformOptions. The group may be optional and may
+ *     contain nested transformOptions.</li>
  * </ul>
- * For local transforms, this structure is extended when defining a pipeline transform.
+ * For local transforms, this structure is extended when defining a pipeline transform and failover transform.
  * <ul>
  * <li>transformerPipeline - an array of pairs of transformer name and target extension for each transformer in the
  * pipeline. The last one should not have an extension as that is defined by the request and should be in the
  * supported list.</li>
+ * <li>transformerFailover - an array of failover definitions used in case of a fail transformation to pass a document
+ * to a sequence of transforms until one succeeds.</li>
  * </ul>
  */
 public class Transformer
@@ -53,6 +58,7 @@ public class Transformer
     private Set<String> transformOptions = new HashSet<>();
     private Set<SupportedSourceAndTarget> supportedSourceAndTargetList = new HashSet<>();
     private List<TransformStep> transformerPipeline = new ArrayList<>();
+    private List<String> transformerFailover = new ArrayList<>();
 
     public Transformer()
     {
@@ -74,6 +80,14 @@ public class Transformer
         this.transformerPipeline = transformerPipeline;
     }
 
+    public Transformer(String transformerName, Set<String> transformOptions,
+        Set<SupportedSourceAndTarget> supportedSourceAndTargetList,
+        List<TransformStep> transformerPipeline, List<String> transformerFailover)
+    {
+        this(transformerName, transformOptions, supportedSourceAndTargetList, transformerPipeline);
+        this.transformerFailover = transformerFailover;
+    }
+
     public String getTransformerName()
     {
         return transformerName;
@@ -92,6 +106,16 @@ public class Transformer
     public void setTransformerPipeline(List<TransformStep> transformerPipeline)
     {
         this.transformerPipeline = transformerPipeline;
+    }
+
+    public List<String> getTransformerFailover()
+    {
+        return transformerFailover;
+    }
+
+    public void setTransformerFailover(List<String> transformerFailover)
+    {
+        this.transformerFailover = transformerFailover;
     }
 
     public Set<String> getTransformOptions()
@@ -123,6 +147,7 @@ public class Transformer
         Transformer that = (Transformer) o;
         return Objects.equals(transformerName, that.transformerName) &&
                Objects.equals(transformerPipeline, that.transformerPipeline) &&
+               Objects.equals(transformerFailover, that.transformerFailover) &&
                Objects.equals(transformOptions, that.transformOptions) &&
                Objects.equals(supportedSourceAndTargetList,
                    that.supportedSourceAndTargetList);
@@ -131,7 +156,7 @@ public class Transformer
     @Override
     public int hashCode()
     {
-        return Objects.hash(transformerName, transformerPipeline, transformOptions,
+        return Objects.hash(transformerName, transformerPipeline, transformerFailover, transformOptions,
             supportedSourceAndTargetList);
     }
 
@@ -141,6 +166,7 @@ public class Transformer
         return "Transformer{" +
                "transformerName='" + transformerName + '\'' +
                ", transformerPipeline=" + transformerPipeline +
+               ", transformerFailover=" + transformerFailover +
                ", transformOptions=" + transformOptions +
                ", supportedSourceAndTargetList=" + supportedSourceAndTargetList +
                '}';
@@ -153,11 +179,9 @@ public class Transformer
 
     public static class Builder
     {
-        private Transformer transformer = new Transformer();
+        private final Transformer transformer = new Transformer();
 
-        private Builder()
-        {
-        }
+        private Builder() {}
 
         public Transformer build()
         {
@@ -173,6 +197,12 @@ public class Transformer
         public Builder withTransformerPipeline(final List<TransformStep> transformerPipeline)
         {
             transformer.transformerPipeline = transformerPipeline;
+            return this;
+        }
+
+        public Builder withTransformerFailover(final List<String> transformerFailover)
+        {
+            transformer.transformerFailover = transformerFailover;
             return this;
         }
 

@@ -28,17 +28,20 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * Represents a set of transformations supported by the Transform Service that share the same transform options. Each
- * may be an actual transformer or the amalgamation of multiple transformers. It is possible that more than one
- * transformer may able to perform a transformation from one mimetype to another. The actual selection of transformer
- * is up to the Transform Service to decide. Clients may use TransformServiceRegistry#isSupported to decide
- * if they should send a request to the Transform Service. As a result clients have a simple generic view of
- * transformations which allows new transformations to be added without the need change client data structures other
- * than to define new name value pairs. For this to work the Transform Service defines unique names for each option.
+ * Represents a set of transformations supported by the Transform Service or Local Transform Service Registry that
+ * share the same transform options. Each may be an actual transformer, a pipeline of multiple transformers or a list
+ * of failover transforms. It is possible that more than one transformer may able to perform a transformation from one
+ * mimetype to another. The actual selection of transformer is up to the Transform Service or Local Transform Service
+ * Registry to decide. Clients may use
+ * {@link TransformServiceRegistry#isSupported(String, long, String, java.util.Map, String)} to decide
+ * if they should send a request to the service. As a result clients have a simple generic view of transformations which
+ * allows new transformations to be added without the need to change client data structures other than to define new
+ * name value pairs. For this to work the Transform Service defines unique names for each option.
  * <ul>
- * <li>transformerName - is unique. The client should infer nothing from the name as it is simply a label.</lI>
- * <li>transformOptions - a grouping of individual transformer transformOptions. The group may be optional and may
- * contain nested transformOptions.</li>
+ *     <li>transformerName - is optional but if supplied should be unique. The client should infer nothing from the name
+ *     as it is simply a label, but the Local Transform Service Registry will use the name in pipelines.</lI>
+ *     <li>transformOptions - a grouping of individual transformer transformOptions. The group may be optional and may
+ *     contain nested transformOptions.</li>
  * </ul>
  * For local transforms, this structure is extended when defining a pipeline transform.
  * <ul>
@@ -53,10 +56,9 @@ public class InlineTransformer
     private Set<TransformOption> transformOptions = new HashSet<>();
     private Set<SupportedSourceAndTarget> supportedSourceAndTargetList = new HashSet<>();
     private List<TransformStep> transformerPipeline = new ArrayList<>();
+    private List<String> transformerFailover = new ArrayList<>();
 
-    public InlineTransformer()
-    {
-    }
+    public InlineTransformer() {}
 
     public InlineTransformer(String transformerName, Set<TransformOption> transformOptions,
         Set<SupportedSourceAndTarget> supportedSourceAndTargetList)
@@ -72,6 +74,14 @@ public class InlineTransformer
     {
         this(transformerName, transformOptions, supportedSourceAndTargetList);
         this.transformerPipeline = transformerPipeline;
+    }
+
+    public InlineTransformer(String transformerName, Set<TransformOption> transformOptions,
+        Set<SupportedSourceAndTarget> supportedSourceAndTargetList,
+        List<TransformStep> transformerPipeline, List<String> transformerFailover)
+    {
+        this(transformerName, transformOptions, supportedSourceAndTargetList, transformerPipeline);
+        this.transformerFailover = transformerFailover;
     }
 
     public String getTransformerName()
@@ -92,6 +102,16 @@ public class InlineTransformer
     public void setTransformerPipeline(List<TransformStep> transformerPipeline)
     {
         this.transformerPipeline = transformerPipeline;
+    }
+
+    public List<String> getTransformerFailover()
+    {
+        return transformerFailover;
+    }
+
+    public void setTransformerFailover(List<String> transformerFailover)
+    {
+        this.transformerFailover = transformerFailover;
     }
 
     public Set<TransformOption> getTransformOptions()
@@ -123,6 +143,7 @@ public class InlineTransformer
         InlineTransformer that = (InlineTransformer) o;
         return Objects.equals(transformerName, that.transformerName) &&
                Objects.equals(transformerPipeline, that.transformerPipeline) &&
+               Objects.equals(transformerFailover, that.transformerFailover) &&
                Objects.equals(transformOptions, that.transformOptions) &&
                Objects.equals(supportedSourceAndTargetList,
                    that.supportedSourceAndTargetList);
@@ -131,7 +152,7 @@ public class InlineTransformer
     @Override
     public int hashCode()
     {
-        return Objects.hash(transformerName, transformerPipeline, transformOptions,
+        return Objects.hash(transformerName, transformerPipeline, transformerFailover, transformOptions,
             supportedSourceAndTargetList);
     }
 
@@ -141,6 +162,7 @@ public class InlineTransformer
         return "Transformer{" +
                "transformerName='" + transformerName + '\'' +
                ", transformerPipeline=" + transformerPipeline +
+               ", transformerFailover=" + transformerFailover +
                ", transformOptions=" + transformOptions +
                ", supportedSourceAndTargetList=" + supportedSourceAndTargetList +
                '}';
@@ -153,11 +175,9 @@ public class InlineTransformer
 
     public static class Builder
     {
-        private InlineTransformer transformer = new InlineTransformer();
+        private final InlineTransformer transformer = new InlineTransformer();
 
-        private Builder()
-        {
-        }
+        private Builder() { }
 
         public InlineTransformer build()
         {
@@ -173,6 +193,12 @@ public class InlineTransformer
         public Builder withTransformerPipeline(final List<TransformStep> transformerPipeline)
         {
             transformer.transformerPipeline = transformerPipeline;
+            return this;
+        }
+
+        public Builder withTransformerFailover(final List<String> transformerFailover)
+        {
+            transformer.transformerFailover = transformerFailover;
             return this;
         }
 

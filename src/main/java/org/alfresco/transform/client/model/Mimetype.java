@@ -9,11 +9,11 @@
 package org.alfresco.transform.client.model;
 
 import static java.util.Arrays.stream;
+import static java.util.Collections.unmodifiableSet;
 import static java.util.stream.Collectors.toSet;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 
@@ -300,7 +300,7 @@ public class Mimetype
 
     static
     {
-        ALL_MIMETYPES = Collections.unmodifiableSet(stream(Mimetype.class.getDeclaredFields())
+        ALL_MIMETYPES = unmodifiableSet(stream(Mimetype.class.getDeclaredFields())
             .filter(f -> Modifier.isPublic(f.getModifiers()))
             .filter(f -> Modifier.isStatic(f.getModifiers()))
             .filter(f -> Modifier.isFinal(f.getModifiers()))
@@ -326,7 +326,7 @@ public class Mimetype
 
     public static Set<String> matchMimetypes(final String regex)
     {
-        return Collections.unmodifiableSet(ALL_MIMETYPES
+        return unmodifiableSet(ALL_MIMETYPES
             .stream()
             .filter(t -> t.matches(regex))
             .collect(toSet()));

@@ -131,9 +131,7 @@ public class SupportedSourceAndTarget
     {
         private SupportedSourceAndTarget supportedSourceAndTarget = new SupportedSourceAndTarget();
 
-        private Builder()
-        {
-        }
+        private Builder() {}
 
         public SupportedSourceAndTarget build()
         {

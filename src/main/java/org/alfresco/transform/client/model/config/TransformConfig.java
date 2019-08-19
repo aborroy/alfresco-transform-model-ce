@@ -35,7 +35,7 @@ import java.util.Set;
 public class TransformConfig
 {
     private Map<String, Set<TransformOption>> transformOptions = new HashMap<>();
-    
+
     private List<Transformer> transformers = new ArrayList<>();
 
     public Map<String, Set<TransformOption>> getTransformOptions()
@@ -90,7 +90,7 @@ public class TransformConfig
 
     public static class Builder
     {
-        private TransformConfig transformConfig = new TransformConfig();
+        private final TransformConfig transformConfig = new TransformConfig();
 
         private Builder() {}
 
