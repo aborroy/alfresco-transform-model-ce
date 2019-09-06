@@ -7,6 +7,7 @@ pushd "$(dirname "${BASH_SOURCE[0]}")/../"
 
 # For PR builds only execute a Dry Run of the release
 [ "${TRAVIS_PULL_REQUEST}" = "false" ] && DRY_RUN="" || DRY_RUN="-DdryRun"
+DRY_RUN=""
 
 # Travis CI runner work on DETACHED HEAD, so we need to checkout the release branch
 git checkout -B "${TRAVIS_BRANCH}"
