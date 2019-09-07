@@ -1,3 +1,24 @@
+/*
+ * #%L
+ * Alfresco Transform Model
+ * %%
+ * Copyright (C) 2005 - 2019 Alfresco Software Limited
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Lesser Public License for more details.
+ *
+ * You should have received a copy of the GNU General Lesser Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/lgpl-3.0.html>.
+ * #L%
+ */
 package org.alfresco.transform.client.model.config;
 
 import java.util.ArrayList;
@@ -35,7 +56,7 @@ public abstract class AbstractTransformRegistry implements TransformServiceRegis
         }
     }
 
-    private static class SupportedTransform
+    static class SupportedTransform
     {
         TransformOptionGroup transformOptions;
         long maxSourceSizeBytes;
@@ -106,16 +127,19 @@ public abstract class AbstractTransformRegistry implements TransformServiceRegis
     {
         List<TransformOptionGroup> list = new ArrayList<>();
 
-        for (String name : transformOptionNames)
+        if (transformOptionNames != null)
         {
-            Set<TransformOption> oneSetOfTransformOptions = transformOptions.get(name);
-            if (oneSetOfTransformOptions == null)
+            for (String name : transformOptionNames)
             {
-                logError("transformOptions in "+readFrom+" with the name "+name+" does not exist. Ignored");
-                continue;
+                Set<TransformOption> oneSetOfTransformOptions = transformOptions.get(name);
+                if (oneSetOfTransformOptions == null)
+                {
+                    logError("transformOptions in " + readFrom + " with the name " + name + " does not exist. Ignored");
+                    continue;
+                }
+                TransformOptionGroup transformOptionGroup = new TransformOptionGroup(false, oneSetOfTransformOptions);
+                list.add(transformOptionGroup);
             }
-            TransformOptionGroup transformOptionGroup = new TransformOptionGroup(true, oneSetOfTransformOptions);
-            list.add(transformOptionGroup);
         }
 
         return list.isEmpty() ? Collections.emptySet()
