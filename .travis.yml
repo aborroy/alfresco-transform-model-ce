@@ -39,5 +39,6 @@ jobs:
 
     - name: "Release"
       stage: release
+      if: branch = release
       before_install: bash _ci/init.sh
       script: bash _ci/release.sh
