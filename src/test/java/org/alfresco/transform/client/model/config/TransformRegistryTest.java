@@ -62,7 +62,7 @@ public class TransformRegistryTest
     {
         return new AbstractTransformRegistry()
         {
-            Data data = new Data();
+            private Data data = new Data();
 
             @Override
             protected void logError(String msg)
@@ -79,22 +79,8 @@ public class TransformRegistryTest
         };
     }
 
-    private void assertAddToPossibleOptions(TransformOptionGroup transformOptionGroup,
-        String actualOptionNames, String expectedNames, String expectedRequired)
-    {
-        final Set<String> expectedNameSet = isBlank(expectedNames) ?
-                                            emptySet() :
-                                            ImmutableSet.copyOf(expectedNames.split(", "));
-        final Set<String> expectedRequiredSet = isBlank(expectedRequired) ?
-                                                emptySet() :
-                                                ImmutableSet.copyOf(expectedRequired.split(", "));
-
-        assertAddToPossibleOptions(transformOptionGroup, actualOptionNames, expectedNameSet,
-            expectedRequiredSet);
-    }
-
     private void assertAddToPossibleOptions(final TransformOptionGroup transformOptionGroup,
-        final String actualOptionNames, final Set<String> expectedNameSet,
+        final Set<String> actualOptionNames, final Set<String> expectedNameSet,
         final Set<String> expectedRequiredSet)
     {
         final Map<String, Boolean> possibleTransformOptions = new HashMap<>();
@@ -118,24 +104,13 @@ public class TransformRegistryTest
     }
 
     // transformOptionNames are upper case if required.
-    private void assertIsSupported(final String actualOptionNames,
-        final String transformOptionNames, final String unsupportedMsg)
+    private void assertIsSupported(final Set<String> actualOptionNames,
+        final Set<String> transformOptionNames, final String unsupportedMsg)
     {
-        final Set<String> transformOptionNameSet = isBlank(transformOptionNames) ?
-                                                   emptySet() :
-                                                   ImmutableSet.copyOf(
-                                                       transformOptionNames.split(", "));
-
-        final Map<String, Boolean> transformOptions = transformOptionNameSet
+        final Map<String, Boolean> transformOptions = transformOptionNames
             .stream()
             .collect(toMap(identity(), name -> name.toUpperCase().equals(name)));
 
-        assertIsSupported(actualOptionNames, transformOptions, unsupportedMsg);
-    }
-
-    private void assertIsSupported(final String actualOptionNames,
-        final Map<String, Boolean> transformOptions, final String unsupportedMsg)
-    {
         boolean supported = registry.isSupported(transformOptions,
             buildActualOptions(actualOptionNames));
         if (isBlank(unsupportedMsg))
@@ -151,10 +126,9 @@ public class TransformRegistryTest
 
     private void assertTransformOptions(Set<TransformOption> setOfTransformOptions)
     {
-        final Transformer transformer = new Transformer("name", singleton("testOptions"),
-            ImmutableSet.of(
-                new SupportedSourceAndTarget(DOC, TXT, -1),
-                new SupportedSourceAndTarget(XLS, TXT, 1024000)));
+        final Transformer transformer = new Transformer("name", singleton("testOptions"), set(
+            new SupportedSourceAndTarget(DOC, TXT, -1),
+            new SupportedSourceAndTarget(XLS, TXT, 1024000)));
         final TransformConfig transformConfig = TransformConfig
             .builder()
             .withTransformers(singletonList(transformer))
@@ -162,7 +136,7 @@ public class TransformRegistryTest
             .build();
 
         registry = buildTransformServiceRegistryImpl();
-        registry.register(transformConfig, getBaseUrl(transformer), getClass().getName());
+        registry.register(transformConfig, null, getClass().getName());
 
         assertTrue(registry.isSupported(XLS, 1024, TXT, emptyMap(), null));
         assertTrue(registry.isSupported(XLS, 1024000, TXT, null, null));
@@ -208,8 +182,7 @@ public class TransformRegistryTest
     {
         registry = buildTransformServiceRegistryImpl();
         stream(transformers)
-            .forEach(t -> registry.register(t, mapOfTransformOptions, getBaseUrl(t),
-                getClass().getName()));
+            .forEach(t -> registry.register(t, mapOfTransformOptions, null, getClass().getName()));
     }
 
     private void assertSupported(String sourceMimetype, long sourceSizeInBytes,
@@ -230,15 +203,10 @@ public class TransformRegistryTest
         }
     }
 
-    private static Map<String, String> buildActualOptions(String actualOptionNames)
+    private static Map<String, String> buildActualOptions(final Set<String> optionNames)
     {
-        if (actualOptionNames == null || actualOptionNames.isEmpty())
-        {
-            return emptyMap();
-        }
-
-        return stream(actualOptionNames.split(", "))
-            .distinct()
+        return optionNames
+            .stream()
             .collect(toMap(identity(), name -> "value for " + name));
     }
 
@@ -246,142 +214,168 @@ public class TransformRegistryTest
     public void testOptionalGroups()
     {
         final TransformOptionGroup transformOptionGroup =
-            new TransformOptionGroup(true, ImmutableSet.of(
+            new TransformOptionGroup(true, set(
                 new TransformOptionValue(false, "1"),
                 new TransformOptionValue(true, "2"),
-                new TransformOptionGroup(false, ImmutableSet.of(
+                new TransformOptionGroup(false, set(
                     new TransformOptionValue(false, "3.1"),
                     new TransformOptionValue(false, "3.2"),
                     new TransformOptionValue(false, "3.3"))),
-                new TransformOptionGroup(false, ImmutableSet.of( // OPTIONAL
+                new TransformOptionGroup(false, set( // OPTIONAL
                     new TransformOptionValue(false, "4.1"),
                     new TransformOptionValue(true, "4.2"),
                     new TransformOptionValue(false, "4.3")))));
 
-        assertAddToPossibleOptions(transformOptionGroup, "", "1, 2", "2");
-        assertAddToPossibleOptions(transformOptionGroup, "1", "1, 2", "2");
-        assertAddToPossibleOptions(transformOptionGroup, "2", "1, 2", "2");
-        assertAddToPossibleOptions(transformOptionGroup, "2, 3.2", "1, 2, 3.1, 3.2, 3.3", "2");
-        assertAddToPossibleOptions(transformOptionGroup, "2, 4.1", "1, 2, 4.1, 4.2, 4.3", "2, 4.2");
-        assertAddToPossibleOptions(transformOptionGroup, "2, 4.2", "1, 2, 4.1, 4.2, 4.3", "2, 4.2");
+        assertAddToPossibleOptions(transformOptionGroup, emptySet(),
+            set("1", "2"), set("2"));
+        assertAddToPossibleOptions(transformOptionGroup, set("1"),
+            set("1", "2"), set("2"));
+        assertAddToPossibleOptions(transformOptionGroup, set("2"),
+            set("1", "2"), set("2"));
+        assertAddToPossibleOptions(transformOptionGroup, set("2", "3.2"),
+            set("1", "2", "3.1", "3.2", "3.3"), set("2"));
+        assertAddToPossibleOptions(transformOptionGroup, set("2", "4.1"),
+            set("1", "2", "4.1", "4.2", "4.3"), set("2", "4.2"));
+        assertAddToPossibleOptions(transformOptionGroup, set("2", "4.2"),
+            set("1", "2", "4.1", "4.2", "4.3"), set("2", "4.2"));
     }
 
     @Test
     public void testRequiredGroup()
     {
         TransformOptionGroup transformOptionGroup =
-            new TransformOptionGroup(true, ImmutableSet.of(
+            new TransformOptionGroup(true, set(
                 new TransformOptionValue(false, "1"),
                 new TransformOptionValue(true, "2"),
-                new TransformOptionGroup(false, ImmutableSet.of(
+                new TransformOptionGroup(false, set(
                     new TransformOptionValue(false, "3.1"),
                     new TransformOptionValue(false, "3.2"),
                     new TransformOptionValue(false, "3.3"))),
-                new TransformOptionGroup(true, ImmutableSet.of( // REQUIRED
+                new TransformOptionGroup(true, set(
                     new TransformOptionValue(false, "4.1"),
                     new TransformOptionValue(true, "4.2"),
                     new TransformOptionValue(false, "4.3")))));
 
-        assertAddToPossibleOptions(transformOptionGroup, "", "1, 2, 4.1, 4.2, 4.3", "2, 4.2");
-        assertAddToPossibleOptions(transformOptionGroup, "1", "1, 2, 4.1, 4.2, 4.3", "2, 4.2");
-        assertAddToPossibleOptions(transformOptionGroup, "2, 3.2",
-            "1, 2, 3.1, 3.2, 3.3, 4.1, 4.2, 4.3", "2, 4.2");
-        assertAddToPossibleOptions(transformOptionGroup, "2, 4.1", "1, 2, 4.1, 4.2, 4.3", "2, 4.2");
-        assertAddToPossibleOptions(transformOptionGroup, "2, 4.2", "1, 2, 4.1, 4.2, 4.3", "2, 4.2");
+        assertAddToPossibleOptions(transformOptionGroup, emptySet(),
+            set("1", "2", "4.1", "4.2", "4.3"), set("2", "4.2"));
+        assertAddToPossibleOptions(transformOptionGroup, set("1"),
+            set("1", "2", "4.1", "4.2", "4.3"), set("2", "4.2"));
+        assertAddToPossibleOptions(transformOptionGroup, set("2", "3.2"),
+            set("1", "2", "3.1", "3.2", "3.3", "4.1", "4.2", "4.3"), set("2", "4.2"));
+        assertAddToPossibleOptions(transformOptionGroup, set("2", "4.1"),
+            set("1", "2", "4.1", "4.2", "4.3"), set("2", "4.2"));
+        assertAddToPossibleOptions(transformOptionGroup, set("2", "4.2"),
+            set("1", "2", "4.1", "4.2", "4.3"), set("2", "4.2"));
     }
 
     @Test
     public void testNestedGroups()
     {
         TransformOptionGroup transformOptionGroup =
-            new TransformOptionGroup(false, ImmutableSet.of(
-                new TransformOptionGroup(false, ImmutableSet.of(
+            new TransformOptionGroup(false, set(
+                new TransformOptionGroup(false, set(
                     new TransformOptionValue(false, "1"),
-                    new TransformOptionGroup(false, ImmutableSet.of(
+                    new TransformOptionGroup(false, set(
                         new TransformOptionValue(false, "1.2"),
-                        new TransformOptionGroup(false, ImmutableSet.of(
+                        new TransformOptionGroup(false, set(
                             new TransformOptionValue(false, "1.2.3"))))))),
-                new TransformOptionGroup(false, ImmutableSet.of(
+                new TransformOptionGroup(false, set(
                     new TransformOptionValue(false, "2"),
-                    new TransformOptionGroup(false, ImmutableSet.of(
+                    new TransformOptionGroup(false, set(
                         new TransformOptionValue(false, "2.2"),
-                        new TransformOptionGroup(false, ImmutableSet.of(
-                            new TransformOptionGroup(false, ImmutableSet.of(
+                        new TransformOptionGroup(false, set(
+                            new TransformOptionGroup(false, set(
                                 new TransformOptionValue(false, "2.2.1.2"))))))))),
-                new TransformOptionGroup(false, ImmutableSet.of(
-                    new TransformOptionValue(true, "3"), // REQUIRED
-                    new TransformOptionGroup(false, ImmutableSet.of(
-                        new TransformOptionGroup(false, ImmutableSet.of(
-                            new TransformOptionGroup(false, ImmutableSet.of(
+                new TransformOptionGroup(false, set(
+                    new TransformOptionValue(true, "3"),
+                    new TransformOptionGroup(false, set(
+                        new TransformOptionGroup(false, set(
+                            new TransformOptionGroup(false, set(
                                 new TransformOptionValue(false, "3.1.1.2"))))))))),
-                new TransformOptionGroup(false, ImmutableSet.of(
+                new TransformOptionGroup(false, set(
                     new TransformOptionValue(false, "4"),
-                    new TransformOptionGroup(true, ImmutableSet.of(
-                        new TransformOptionGroup(false, ImmutableSet.of(
-                            new TransformOptionGroup(false, ImmutableSet.of(
+                    new TransformOptionGroup(true, set(
+                        new TransformOptionGroup(false, set(
+                            new TransformOptionGroup(false, set(
                                 new TransformOptionValue(false, "4.1.1.2"))))))))),
-                new TransformOptionGroup(false, ImmutableSet.of(
+                new TransformOptionGroup(false, set(
                     new TransformOptionValue(false, "5"),
-                    new TransformOptionGroup(false, ImmutableSet.of(
-                        new TransformOptionGroup(true, ImmutableSet.of(
-                            new TransformOptionGroup(false, ImmutableSet.of(
+                    new TransformOptionGroup(false, set(
+                        new TransformOptionGroup(true, set(
+                            new TransformOptionGroup(false, set(
                                 new TransformOptionValue(false, "5.1.1.2"))))))))),
-                new TransformOptionGroup(false, ImmutableSet.of(
+                new TransformOptionGroup(false, set(
                     new TransformOptionValue(false, "6"),
-                    new TransformOptionGroup(false, ImmutableSet.of(
-                        new TransformOptionGroup(false, ImmutableSet.of(
-                            new TransformOptionGroup(true, ImmutableSet.of(
+                    new TransformOptionGroup(false, set(
+                        new TransformOptionGroup(false, set(
+                            new TransformOptionGroup(true, set(
                                 new TransformOptionValue(false, "6.1.1.2"))))))))),
-                new TransformOptionGroup(false, ImmutableSet.of(
+                new TransformOptionGroup(false, set(
                     new TransformOptionValue(false, "7"),
-                    new TransformOptionGroup(false, ImmutableSet.of(
-                        new TransformOptionGroup(false, ImmutableSet.of(
-                            new TransformOptionGroup(false, ImmutableSet.of(
+                    new TransformOptionGroup(false, set(
+                        new TransformOptionGroup(false, set(
+                            new TransformOptionGroup(false, set(
                                 new TransformOptionValue(true, "7.1.1.2")))))))))
             ));
 
-        assertAddToPossibleOptions(transformOptionGroup, "", "", "");
-        assertAddToPossibleOptions(transformOptionGroup, "1", "1", "");
-        assertAddToPossibleOptions(transformOptionGroup, "1, 7", "1, 7", "");
-        assertAddToPossibleOptions(transformOptionGroup, "1, 7.1.1.2", "1, 7, 7.1.1.2", "7.1.1.2");
-        assertAddToPossibleOptions(transformOptionGroup, "1, 6", "1, 6", "");
-        assertAddToPossibleOptions(transformOptionGroup, "1, 6.1.1.2", "1, 6, 6.1.1.2", "");
-        assertAddToPossibleOptions(transformOptionGroup, "1, 5", "1, 5", "");
-        assertAddToPossibleOptions(transformOptionGroup, "1, 5.1.1.2", "1, 5, 5.1.1.2", "");
-        assertAddToPossibleOptions(transformOptionGroup, "1, 4", "1, 4", "");
-        assertAddToPossibleOptions(transformOptionGroup, "1, 4.1.1.2", "1, 4, 4.1.1.2", "");
-        assertAddToPossibleOptions(transformOptionGroup, "1, 3", "1, 3", "3");
-        assertAddToPossibleOptions(transformOptionGroup, "1, 3.1.1.2", "1, 3, 3.1.1.2", "3");
+        assertAddToPossibleOptions(transformOptionGroup, emptySet(),
+            emptySet(), emptySet());
+        assertAddToPossibleOptions(transformOptionGroup, set("1"),
+            set("1"), emptySet());
+        assertAddToPossibleOptions(transformOptionGroup, set("1", "7"),
+            set("1", "7"), emptySet());
+        assertAddToPossibleOptions(transformOptionGroup, set("1", "7.1.1.2"),
+            set("1", "7", "7.1.1.2"), set("7.1.1.2"));
+        assertAddToPossibleOptions(transformOptionGroup, set("1", "6"),
+            set("1", "6"), emptySet());
+        assertAddToPossibleOptions(transformOptionGroup, set("1", "6.1.1.2"),
+            set("1", "6", "6.1.1.2"), emptySet());
+        assertAddToPossibleOptions(transformOptionGroup, set("1", "5"),
+            set("1", "5"), emptySet());
+        assertAddToPossibleOptions(transformOptionGroup, set("1", "5.1.1.2"),
+            set("1", "5", "5.1.1.2"), emptySet());
+        assertAddToPossibleOptions(transformOptionGroup, set("1", "4"),
+            set("1", "4"), emptySet());
+        assertAddToPossibleOptions(transformOptionGroup, set("1", "4.1.1.2"),
+            set("1", "4", "4.1.1.2"), emptySet());
+        assertAddToPossibleOptions(transformOptionGroup, set("1", "3"),
+            set("1", "3"), set("3"));
+        assertAddToPossibleOptions(transformOptionGroup, set("1", "3.1.1.2"),
+            set("1", "3", "3.1.1.2"), set("3"));
 
-        assertAddToPossibleOptions(transformOptionGroup, "2", "2", "");
-        assertAddToPossibleOptions(transformOptionGroup, "2, 2.2", "2, 2.2", "");
-        assertAddToPossibleOptions(transformOptionGroup, "3", "3", "3");
-        assertAddToPossibleOptions(transformOptionGroup, "3.1.1.2", "3, 3.1.1.2", "3");
+        assertAddToPossibleOptions(transformOptionGroup, set("2"),
+            set("2"), emptySet());
+        assertAddToPossibleOptions(transformOptionGroup, set("2", "2.2"),
+            set("2", "2.2"), emptySet());
+        assertAddToPossibleOptions(transformOptionGroup, set("3"),
+            set("3"), set("3"));
+        assertAddToPossibleOptions(transformOptionGroup, set("3.1.1.2"),
+            set("3", "3.1.1.2"), set("3"));
     }
 
     @Test
     public void testRegistryIsSupportedMethod()
     {
-        assertIsSupported("a", "a, B, c", "required option B is missing");
-        assertIsSupported("", "a, B, c", "required option B is missing");
-        assertIsSupported("B", "a, B, c", null);
-        assertIsSupported("B, c", "a, B, c", null);
-        assertIsSupported("B, a, c", "a, B, c", null);
+        assertIsSupported(set("a"), set("a", "B", "c"), "required option B is missing");
+        assertIsSupported(emptySet(), set("a", "B", "c"), "required option B is missing");
+        assertIsSupported(set("B"), set("a", "B", "c"), null);
+        assertIsSupported(set("B", "c"), set("a", "B", "c"), null);
+        assertIsSupported(set("B", "a", "c"), set("a", "B", "c"), null);
 
-        assertIsSupported("B, d", "a, B, c", "there is an extra option d");
-        assertIsSupported("B, c, d", "a, B, c", "there is an extra option d");
-        assertIsSupported("d", "a, B, c",
+        assertIsSupported(set("B", "d"), set("a", "B", "c"), "there is an extra option d");
+        assertIsSupported(set("B", "c", "d"), set("a", "B", "c"), "there is an extra option d");
+        assertIsSupported(set("d"), set("a", "B", "c"),
             "required option B is missing and there is an extra option d");
 
-        assertIsSupported("a", "a, b, c", null);
-        assertIsSupported("", "a, b, c", null);
-        assertIsSupported("a, b, c", "a, b, c", null);
+        assertIsSupported(set("a"), set("a", "b", "c"), null);
+        assertIsSupported(emptySet(), set("a", "b", "c"), null);
+        assertIsSupported(set("a", "b", "c"), set("a", "b", "c"), null);
     }
 
     @Test
     public void testNoActualOptions()
     {
-        assertTransformOptions(ImmutableSet.of(
+        assertTransformOptions(set(
             new TransformOptionValue(false, "option1"),
             new TransformOptionValue(false, "option2")));
     }
@@ -394,17 +388,16 @@ public class TransformRegistryTest
     }
 
     @Test
-    public void testSupported() throws Exception
+    public void testSupported()
     {
-        mapOfTransformOptions.put("options1", ImmutableSet.of(
+        mapOfTransformOptions.put("options1", set(
             new TransformOptionValue(false, "page"),
             new TransformOptionValue(false, "width"),
             new TransformOptionValue(false, "height")));
-        final Transformer transformer = new Transformer("name", singleton("options1"),
-            ImmutableSet.of(
-                new SupportedSourceAndTarget(DOC, GIF, 102400),
-                new SupportedSourceAndTarget(DOC, JPEG, -1),
-                new SupportedSourceAndTarget(MSG, GIF, -1)));
+        final Transformer transformer = new Transformer("name", singleton("options1"), set(
+            new SupportedSourceAndTarget(DOC, GIF, 102400),
+            new SupportedSourceAndTarget(DOC, JPEG, -1),
+            new SupportedSourceAndTarget(MSG, GIF, -1)));
 
         assertSupported(transformer, DOC, 1024, GIF, emptyMap(), null);
         assertSupported(transformer, DOC, 102400, GIF, emptyMap(), null);
@@ -416,9 +409,10 @@ public class TransformRegistryTest
         assertSupported(transformer, MSG, 1024, JPEG, emptyMap(),
             MSG + " to " + JPEG + " is not supported by this transformer");
 
-        assertSupported(transformer, DOC, 1024, GIF, buildActualOptions("page, width"), null);
-        assertSupported(transformer, DOC, 1024, GIF, buildActualOptions("page, width, startPage"),
-            "startPage is not an option");
+        assertSupported(transformer, DOC, 1024, GIF, buildActualOptions(set("page", "width")),
+            null);
+        assertSupported(transformer, DOC, 1024, GIF,
+            buildActualOptions(set("page", "width", "startPage")), "startPage is not an option");
     }
 
     @Test
@@ -426,18 +420,16 @@ public class TransformRegistryTest
     // The source mimetype may change.
     public void testCache()
     {
-        mapOfTransformOptions.put("options1", ImmutableSet.of(
+        mapOfTransformOptions.put("options1", set(
             new TransformOptionValue(false, "page"),
             new TransformOptionValue(false, "width"),
             new TransformOptionValue(false, "height")));
 
-        final Transformer transformer = new Transformer("name", singleton("options1"),
-            ImmutableSet.of(
-                new SupportedSourceAndTarget(DOC, GIF, 102400),
-                new SupportedSourceAndTarget(MSG, GIF, -1)));
+        final Transformer transformer = new Transformer("name", singleton("options1"), set(
+            new SupportedSourceAndTarget(DOC, GIF, 102400),
+            new SupportedSourceAndTarget(MSG, GIF, -1)));
 
-        registry.register(transformer, mapOfTransformOptions, getBaseUrl(transformer),
-            getClass().getName());
+        registry.register(transformer, mapOfTransformOptions, null, getClass().getName());
 
         assertSupported(DOC, 1024, GIF, emptyMap(), "doclib", "");
         assertSupported(MSG, 1024, GIF, emptyMap(), "doclib", "");
@@ -487,26 +479,24 @@ public class TransformRegistryTest
     @Test
     public void testMultipleTransformers()
     {
-        mapOfTransformOptions.put("options1", ImmutableSet.of(
+        mapOfTransformOptions.put("options1", set(
             new TransformOptionValue(false, "page"),
             new TransformOptionValue(false, "width"),
             new TransformOptionValue(false, "height")));
-        mapOfTransformOptions.put("options2", ImmutableSet.of(
+        mapOfTransformOptions.put("options2", set(
             new TransformOptionValue(false, "opt1"),
             new TransformOptionValue(false, "opt2")));
         mapOfTransformOptions.put("options3", new HashSet<>(singletonList(
             new TransformOptionValue(false, "opt1"))));
 
-        Transformer transformer1 = new Transformer("transformer1", singleton("options1"),
-            ImmutableSet.of(
-                new SupportedSourceAndTarget(DOC, GIF, 102400),
-                new SupportedSourceAndTarget(DOC, JPEG, -1),
-                new SupportedSourceAndTarget(MSG, GIF, -1)));
+        Transformer transformer1 = new Transformer("transformer1", singleton("options1"), set(
+            new SupportedSourceAndTarget(DOC, GIF, 102400),
+            new SupportedSourceAndTarget(DOC, JPEG, -1),
+            new SupportedSourceAndTarget(MSG, GIF, -1)));
 
-        Transformer transformer2 = new Transformer("transformer2", singleton("options2"),
-            ImmutableSet.of(
-                new SupportedSourceAndTarget(PDF, GIF, -1),
-                new SupportedSourceAndTarget(PPT, JPEG, -1)));
+        Transformer transformer2 = new Transformer("transformer2", singleton("options2"), set(
+            new SupportedSourceAndTarget(PDF, GIF, -1),
+            new SupportedSourceAndTarget(PPT, JPEG, -1)));
 
         Transformer transformer3 = new Transformer("transformer3", singleton("options3"),
             new HashSet<>(singletonList(
@@ -526,7 +516,7 @@ public class TransformRegistryTest
         assertSupported(PDF, 1024, GIF, emptyMap(), null, transformer1, transformer2,
             transformer3);
 
-        final Map<String, String> actualOptions = buildActualOptions("opt1");
+        final Map<String, String> actualOptions = buildActualOptions(set("opt1"));
         assertSupported(PDF, 1024, GIF, actualOptions, "Only transformer2/4 supports these options",
             transformer1);
         assertSupported(PDF, 1024, GIF, actualOptions, null, transformer1, transformer2);
@@ -534,5 +524,15 @@ public class TransformRegistryTest
             transformer3);
         assertSupported(PDF, 1024, GIF, actualOptions,
             "transformer4 supports opt1 but not the source mimetype ", transformer1, transformer3);
+    }
+
+    @SafeVarargs
+    private static <T> Set<T> set(T... elements)
+    {
+        if (elements == null || elements.length == 0)
+        {
+            return emptySet();
+        }
+        return ImmutableSet.copyOf(elements);
     }
 }
