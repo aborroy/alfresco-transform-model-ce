@@ -21,15 +21,17 @@
  */
 package org.alfresco.transform.client.model.config;
 
+import static java.util.Collections.emptyMap;
+import static java.util.Collections.emptySet;
+
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * Used to work out if a transformation is supported. Sub classes should implement {@link #getData()} to return an
@@ -42,8 +44,8 @@ public abstract class AbstractTransformRegistry implements TransformServiceRegis
 
     public static class Data
     {
-        ConcurrentMap<String, ConcurrentMap<String, List<SupportedTransform>>> transformers = new ConcurrentHashMap<>();
-        ConcurrentMap<String, ConcurrentMap<String, List<SupportedTransform>>> cachedSupportedTransformList = new ConcurrentHashMap<>();
+        Map<String, Map<String, List<SupportedTransform>>> transformers = new ConcurrentHashMap<>();
+        Map<String, Map<String, List<SupportedTransform>>> cachedSupportedTransformList = new ConcurrentHashMap<>();
         protected int transformerCount = 0;
         protected int transformCount = 0;
 
@@ -51,8 +53,8 @@ public abstract class AbstractTransformRegistry implements TransformServiceRegis
         public String toString()
         {
             return transformerCount == 0 && transformCount == 0
-                    ? ""
-                    : "(transformers: "+transformerCount+" transforms: "+transformCount+")";
+                   ? ""
+                   : "(transformers: " + transformerCount + " transforms: " + transformCount + ")";
         }
     }
 
@@ -63,8 +65,8 @@ public abstract class AbstractTransformRegistry implements TransformServiceRegis
         private String name;
         private int priority;
 
-        public SupportedTransform(Data data, String name, Set<TransformOption> transformOptions,
-                                  long maxSourceSizeBytes, int priority)
+        SupportedTransform(Data data, String name, Set<TransformOption> transformOptions,
+            long maxSourceSizeBytes, int priority)
         {
             // Logically the top level TransformOptionGroup is required, so that child options are optional or required
             // based on their own setting.
@@ -74,84 +76,106 @@ public abstract class AbstractTransformRegistry implements TransformServiceRegis
             this.priority = priority;
             data.transformCount++;
         }
+
+        @Override public boolean equals(Object o)
+        {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            SupportedTransform that = (SupportedTransform) o;
+            return maxSourceSizeBytes == that.maxSourceSizeBytes &&
+                   priority == that.priority &&
+                   Objects.equals(transformOptions, that.transformOptions) &&
+                   Objects.equals(name, that.name);
+        }
+
+        @Override public int hashCode()
+        {
+            return Objects.hash(transformOptions, maxSourceSizeBytes, name, priority);
+        }
     }
 
     /**
      * Logs an error message if there is an error in the configuration supplied to the
      * {@link #register(Transformer, Map, String, String)}.
+     *
      * @param msg to be logged.
      */
     protected abstract void logError(String msg);
 
     /**
      * Returns the data held by the registry. Sub classes may extend the base Data and replace it at run time.
+     *
      * @return the Data object that contains the registry's data.
      */
     protected abstract Data getData();
 
     /**
      * Registers all the transformer in the transformConfig.
+     *
      * @param transformConfig which contains the transformers and their options
-     * @param baseUrl where the config can be read from. Only needed when it is remote. Is null when local.
-     * @param readFrom debug message for log messages, indicating what type of config was read.
+     * @param baseUrl         where the config can be read from. Only needed when it is remote. Is null when local.
+     * @param readFrom        debug message for log messages, indicating what type of config was read.
      */
-    public void register(TransformConfig transformConfig, String baseUrl, String readFrom)
+    public void register(final TransformConfig transformConfig, final String baseUrl,
+        final String readFrom)
     {
-        Map<String, Set<TransformOption>> transformOptions = transformConfig.getTransformOptions();
-        List<Transformer> transformers = transformConfig.getTransformers();
-        transformers.forEach(transformer ->register(transformer, transformOptions, baseUrl, readFrom));
+        transformConfig
+            .getTransformers()
+            .forEach(t -> register(t, transformConfig.getTransformOptions(), baseUrl, readFrom));
     }
 
     /**
      * Registers a single transformer.
-     * @param transformer to be registered
+     *
+     * @param transformer      to be registered
      * @param transformOptions all the transform options
-     * @param baseUrl where the transformer was read from when remote.
-     * @param readFrom debug message for log messages, indicating what type of config was read.
+     * @param baseUrl          where the transformer was read from when remote.
+     * @param readFrom         debug message for log messages, indicating what type of config was read.
      */
-    protected void register(Transformer transformer, Map<String, Set<TransformOption>> transformOptions,
-                            String baseUrl, String readFrom)
+    protected void register(final Transformer transformer,
+        final Map<String, Set<TransformOption>> transformOptions, final String baseUrl,
+        final String readFrom)
     {
-        Data data = getData();
-        data.transformerCount++;
-        transformer.getSupportedSourceAndTargetList().forEach(
-                e -> data.transformers.computeIfAbsent(e.getSourceMediaType(),
-                        k -> new ConcurrentHashMap<>()).computeIfAbsent(e.getTargetMediaType(),
-                        k -> new ArrayList<>()).add(
-                        new SupportedTransform(data, transformer.getTransformerName(),
-                                lookupTransformOptions(transformer.getTransformOptions(), transformOptions, readFrom),
-                                e.getMaxSourceSizeBytes(), e.getPriority())));
+        getData().transformerCount++;
+        transformer
+            .getSupportedSourceAndTargetList()
+            .forEach(e -> getData().transformers
+                .computeIfAbsent(e.getSourceMediaType(), k -> new ConcurrentHashMap<>())
+                .computeIfAbsent(e.getTargetMediaType(), k -> new ArrayList<>())
+                .add(new SupportedTransform(getData(), transformer.getTransformerName(),
+                    lookupTransformOptions(transformer.getTransformOptions(), transformOptions,
+                        readFrom), e.getMaxSourceSizeBytes(), e.getPriority())));
     }
 
-    private Set<TransformOption> lookupTransformOptions(Set<String> transformOptionNames,
-                                                        Map<String, Set<TransformOption>> transformOptions,
-                                                        String readFrom)
+    private Set<TransformOption> lookupTransformOptions(final Set<String> transformOptionNames,
+        final Map<String, Set<TransformOption>> transformOptions, final String readFrom)
     {
-        List<TransformOptionGroup> list = new ArrayList<>();
-
-        if (transformOptionNames != null)
+        if (transformOptionNames == null)
         {
-            for (String name : transformOptionNames)
-            {
-                Set<TransformOption> oneSetOfTransformOptions = transformOptions.get(name);
-                if (oneSetOfTransformOptions == null)
-                {
-                    logError("transformOptions in " + readFrom + " with the name " + name + " does not exist. Ignored");
-                    continue;
-                }
-                TransformOptionGroup transformOptionGroup = new TransformOptionGroup(false, oneSetOfTransformOptions);
-                list.add(transformOptionGroup);
-            }
+            return emptySet();
         }
 
-        return list.isEmpty() ? Collections.emptySet()
-                : list.size() == 1 ? list.get(0).getTransformOptions()
-                : new HashSet<>(list);
+        final Set<TransformOption> optionGroups = new HashSet<>();
+        for (String name : transformOptionNames)
+        {
+            final Set<TransformOption> oneSetOfTransformOptions = transformOptions.get(name);
+            if (oneSetOfTransformOptions == null)
+            {
+                logError("transformOptions in " + readFrom + " with the name " + name +
+                         " does not exist. Ignored");
+                continue;
+            }
+            optionGroups.add(new TransformOptionGroup(false, oneSetOfTransformOptions));
+        }
+
+        return optionGroups.size() == 1 ?
+               ((TransformOptionGroup) optionGroups.iterator().next()).getTransformOptions() :
+               optionGroups;
     }
 
     @Override
     public boolean isSupported(String sourceMimetype, long sourceSizeInBytes, String targetMimetype,
-                               Map<String, String> actualOptions, String renditionName)
+        Map<String, String> actualOptions, String renditionName)
     {
         long maxSize = getMaxSize(sourceMimetype, targetMimetype, actualOptions, renditionName);
         return maxSize != 0 && (maxSize == -1L || maxSize >= sourceSizeInBytes);
@@ -161,55 +185,59 @@ public abstract class AbstractTransformRegistry implements TransformServiceRegis
      * Works out the name of the transformer (might not map to an actual transformer) that will be used to transform
      * content of a given source mimetype and size into a target mimetype given a list of actual transform option names
      * and values (Strings) plus the data contained in the Transform objects registered with this class.
-     * @param sourceMimetype the mimetype of the source content
+     *
+     * @param sourceMimetype    the mimetype of the source content
      * @param sourceSizeInBytes the size in bytes of the source content. Ignored if negative.
-     * @param targetMimetype the mimetype of the target
-     * @param actualOptions the actual name value pairs available that could be passed to the Transform Service.
-     * @param renditionName (optional) name for the set of options and target mimetype. If supplied is used to cache
-     *                      results to avoid having to work out if a given transformation is supported a second time.
-     *                      The sourceMimetype and sourceSizeInBytes may still change. In the case of ACS this is the
-     *                      rendition name.
+     * @param targetMimetype    the mimetype of the target
+     * @param actualOptions     the actual name value pairs available that could be passed to the Transform Service.
+     * @param renditionName     (optional) name for the set of options and target mimetype. If supplied is used to cache
+     *                          results to avoid having to work out if a given transformation is supported a second time.
+     *                          The sourceMimetype and sourceSizeInBytes may still change. In the case of ACS this is the
+     *                          rendition name.
      */
     @Override
-    public String getTransformerName(String sourceMimetype, long sourceSizeInBytes, String targetMimetype, Map<String, String> actualOptions, String renditionName)
+    public String getTransformerName(final String sourceMimetype, final long sourceSizeInBytes,
+        final String targetMimetype, final Map<String, String> actualOptions,
+        final String renditionName)
     {
-        List<SupportedTransform> supportedTransforms = getTransformListBySize(sourceMimetype, targetMimetype, actualOptions, renditionName);
-        for (SupportedTransform supportedTransform : supportedTransforms)
-        {
-            if (supportedTransform.maxSourceSizeBytes == -1 || supportedTransform.maxSourceSizeBytes >= sourceSizeInBytes)
-            {
-                return supportedTransform.name;
-            }
-        }
-
-        return null;
+        return getTransformListBySize(sourceMimetype, targetMimetype, actualOptions, renditionName)
+            .stream()
+            .filter(t -> t.maxSourceSizeBytes == -1 || t.maxSourceSizeBytes >= sourceSizeInBytes)
+            .findFirst()
+            .map(t -> t.name)
+            .orElse(null);
     }
 
     @Override
-    public long getMaxSize(String sourceMimetype, String targetMimetype,
-                           Map<String, String> actualOptions, String renditionName)
+    public long getMaxSize(final String sourceMimetype, final String targetMimetype,
+        final Map<String, String> actualOptions, final String renditionName)
     {
-        List<SupportedTransform> supportedTransforms = getTransformListBySize(sourceMimetype, targetMimetype, actualOptions, renditionName);
-        return supportedTransforms.isEmpty() ? 0 : supportedTransforms.get(supportedTransforms.size()-1).maxSourceSizeBytes;
+        final List<SupportedTransform> supportedTransforms = getTransformListBySize(sourceMimetype,
+            targetMimetype, actualOptions, renditionName);
+        return supportedTransforms.isEmpty() ? 0 : supportedTransforms.get(
+            supportedTransforms.size() - 1).maxSourceSizeBytes;
     }
 
     // Returns transformers in increasing supported size order, where lower priority transformers for the same size have
     // been discarded.
-    private List<SupportedTransform> getTransformListBySize(String sourceMimetype, String targetMimetype,
-                                                            Map<String, String> actualOptions, String renditionName)
+    private List<SupportedTransform> getTransformListBySize(String sourceMimetype,
+        String targetMimetype, Map<String, String> actualOptions, String renditionName)
     {
         if (actualOptions == null)
         {
-            actualOptions = Collections.emptyMap();
+            actualOptions = emptyMap();
         }
         if (renditionName != null && renditionName.trim().isEmpty())
         {
             renditionName = null;
         }
 
-        Data data = getData();
-        List<SupportedTransform> transformListBySize = renditionName == null ? null
-                : data.cachedSupportedTransformList.computeIfAbsent(renditionName, k -> new ConcurrentHashMap<>()).get(sourceMimetype);
+        final Data data = getData();
+        List<SupportedTransform> transformListBySize =
+            renditionName == null ? null :
+            data.cachedSupportedTransformList
+                .computeIfAbsent(renditionName, k -> new ConcurrentHashMap<>())
+                .get(sourceMimetype);
         if (transformListBySize != null)
         {
             return transformListBySize;
@@ -223,8 +251,8 @@ public abstract class AbstractTransformRegistry implements TransformServiceRegis
         }
 
         transformListBySize = new ArrayList<>();
-        ConcurrentMap<String, List<SupportedTransform>> targetMap = data.transformers.get(sourceMimetype);
-        if (targetMap !=  null)
+        Map<String, List<SupportedTransform>> targetMap = data.transformers.get(sourceMimetype);
+        if (targetMap != null)
         {
             List<SupportedTransform> supportedTransformList = targetMap.get(targetMimetype);
             if (supportedTransformList != null)
@@ -233,7 +261,8 @@ public abstract class AbstractTransformRegistry implements TransformServiceRegis
                 {
                     TransformOptionGroup transformOptions = supportedTransform.transformOptions;
                     Map<String, Boolean> possibleTransformOptions = new HashMap<>();
-                    addToPossibleTransformOptions(possibleTransformOptions, transformOptions, true, actualOptions);
+                    addToPossibleTransformOptions(possibleTransformOptions, transformOptions, true,
+                        actualOptions);
                     if (isSupported(possibleTransformOptions, actualOptions))
                     {
                         addToSupportedTransformList(transformListBySize, supportedTransform);
@@ -244,21 +273,26 @@ public abstract class AbstractTransformRegistry implements TransformServiceRegis
 
         if (renditionName != null)
         {
-            data.cachedSupportedTransformList.get(renditionName).put(sourceMimetype, transformListBySize);
+            data.cachedSupportedTransformList
+                .get(renditionName)
+                .put(sourceMimetype, transformListBySize);
         }
 
         return transformListBySize;
     }
 
-    // Add newTransform to the transformListBySize in increasing size order and discards lower priority (numerically
-    // higher) transforms with a smaller or equal size.
-    private void addToSupportedTransformList(List<SupportedTransform> transformListBySize, SupportedTransform newTransform)
+    // Add newTransform to the transformListBySize in increasing size order and discards
+    // lower priority (numerically higher) transforms with a smaller or equal size.
+    private void addToSupportedTransformList(final List<SupportedTransform> transformListBySize,
+        final SupportedTransform newTransform)
     {
-        for (int i=0; i < transformListBySize.size(); i++)
+        for (int i = 0; i < transformListBySize.size(); i++)
         {
             SupportedTransform existingTransform = transformListBySize.get(i);
             int added = -1;
-            int compare = compare(newTransform.maxSourceSizeBytes, existingTransform.maxSourceSizeBytes);
+
+            int compare = compare(newTransform.maxSourceSizeBytes,
+                existingTransform.maxSourceSizeBytes);
             if (compare < 0)
             {
                 transformListBySize.add(i, newTransform);
@@ -272,6 +306,7 @@ public abstract class AbstractTransformRegistry implements TransformServiceRegis
                     added = i;
                 }
             }
+
             if (added == i)
             {
                 for (i--; i >= 0; i--)
@@ -289,13 +324,9 @@ public abstract class AbstractTransformRegistry implements TransformServiceRegis
     }
 
     // compare where -1 is unlimited.
-    private int compare(long a, long b)
+    private static int compare(final long a, final long b)
     {
-        return a == -1
-                ? b == -1 ? 0 : 1
-                : b == -1 ? -1
-                : a == b ? 0
-                : a > b ? 1 : -1;
+        return a == -1 ? b == -1 ? 0 : 1 : Long.compare(a, b);
     }
 
     /**
@@ -308,12 +339,13 @@ public abstract class AbstractTransformRegistry implements TransformServiceRegis
      * required or if the actualOptions include individual options from the group. As a result it is possible that none
      * of the group are added if it is optional. It is also possible to add individual transform options that are
      * themselves required but not in the actualOptions. In this the isSupported method will return false.
+     *
      * @return true if any options were added. Used by nested call parents to determine if an option was added from a
      * nested sub group.
      */
     boolean addToPossibleTransformOptions(Map<String, Boolean> possibleTransformOptions,
-                                          TransformOptionGroup transformOptionGroup,
-                                          Boolean parentGroupRequired, Map<String, String> actualOptions)
+        TransformOptionGroup transformOptionGroup,
+        Boolean parentGroupRequired, Map<String, String> actualOptions)
     {
         boolean added = false;
         boolean required = false;
@@ -329,8 +361,9 @@ public abstract class AbstractTransformRegistry implements TransformServiceRegis
             {
                 if (transformOption instanceof TransformOptionGroup)
                 {
-                    added = addToPossibleTransformOptions(possibleTransformOptions, (TransformOptionGroup) transformOption,
-                            transformOptionGroupRequired, actualOptions);
+                    added = addToPossibleTransformOptions(possibleTransformOptions,
+                        (TransformOptionGroup) transformOption,
+                        transformOptionGroupRequired, actualOptions);
                     required |= added;
                 }
                 else

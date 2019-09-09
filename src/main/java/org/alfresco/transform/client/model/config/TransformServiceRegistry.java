@@ -32,48 +32,51 @@ public interface TransformServiceRegistry
      * Works out if the Transform Server should be able to transform content of a given source mimetype and size into a
      * target mimetype given a list of actual transform option names and values (Strings) plus the data contained in the
      * Transformer objects registered with this class.
-     * @param sourceMimetype the mimetype of the source content
+     *
+     * @param sourceMimetype    the mimetype of the source content
      * @param sourceSizeInBytes the size in bytes of the source content. Ignored if negative.
-     * @param targetMimetype the mimetype of the target
-     * @param actualOptions the actual name value pairs available that could be passed to the Transform Service.
-     * @param transformName (optional) name for the set of options and target mimetype. If supplied is used to cache
-     *                      results to avoid having to work out if a given transformation is supported a second time.
-     *                      The sourceMimetype and sourceSizeInBytes may still change. In the case of ACS this is the
-     *                      rendition name.
+     * @param targetMimetype    the mimetype of the target
+     * @param actualOptions     the actual name value pairs available that could be passed to the Transform Service.
+     * @param transformName     (optional) name for the set of options and target mimetype. If supplied is used to cache
+     *                          results to avoid having to work out if a given transformation is supported a second time.
+     *                          The sourceMimetype and sourceSizeInBytes may still change. In the case of ACS this is the
+     *                          rendition name.
      * @return {@code}true{@code} if it is supported.
      */
     boolean isSupported(String sourceMimetype, long sourceSizeInBytes, String targetMimetype,
-                        Map<String, String> actualOptions, String transformName);
+        Map<String, String> actualOptions, String transformName);
 
     /**
      * Returns the maximun size (in bytes) of the source content that can be transformed.
+     *
      * @param sourceMimetype the mimetype of the source content
      * @param targetMimetype the mimetype of the target
-     * @param actualOptions the actual name value pairs available that could be passed to the Transform Service.
-     * @param transformName (optional) name for the set of options and target mimetype. If supplied is used to cache
-     *                      results to avoid having to work out if a given transformation is supported a second time.
-     *                      The sourceMimetype and sourceSizeInBytes may still change. In the case of ACS this is the
-     *                      rendition name.
+     * @param actualOptions  the actual name value pairs available that could be passed to the Transform Service.
+     * @param transformName  (optional) name for the set of options and target mimetype. If supplied is used to cache
+     *                       results to avoid having to work out if a given transformation is supported a second time.
+     *                       The sourceMimetype and sourceSizeInBytes may still change. In the case of ACS this is the
+     *                       rendition name.
      * @return the maximum size (in bytes) of the source content that can be transformed. If {@code -1} there is no
      * limit, but if {@code 0} the transform is not supported.
      */
-    long getMaxSize(String sourceMimetype, String targetMimetype,
-                    Map<String, String> actualOptions, String transformName);
+    long getMaxSize(String sourceMimetype, String targetMimetype, Map<String, String> actualOptions,
+        String transformName);
 
     /**
      * Works out the name of the transformer (might not map to an actual transformer) that will be used to transform
      * content of a given source mimetype and size into a target mimetype given a list of actual transform option names
      * and values (Strings) plus the data contained in the Transformer objects registered with this class.
-     * @param sourceMimetype the mimetype of the source content
+     *
+     * @param sourceMimetype    the mimetype of the source content
      * @param sourceSizeInBytes the size in bytes of the source content. Ignored if negative.
-     * @param targetMimetype the mimetype of the target
-     * @param actualOptions the actual name value pairs available that could be passed to the Transform Service.
-     * @param renditionName (optional) name for the set of options and target mimetype. If supplied is used to cache
-     *                      results to avoid having to work out if a given transformation is supported a second time.
-     *                      The sourceMimetype and sourceSizeInBytes may still change. In the case of ACS this is the
-     *                      rendition name.
+     * @param targetMimetype    the mimetype of the target
+     * @param actualOptions     the actual name value pairs available that could be passed to the Transform Service.
+     * @param renditionName     (optional) name for the set of options and target mimetype. If supplied is used to cache
+     *                          results to avoid having to work out if a given transformation is supported a second time.
+     *                          The sourceMimetype and sourceSizeInBytes may still change. In the case of ACS this is the
+     *                          rendition name.
      * @return the name of the transformer or {@code}null{@code} if not set or there is no supported transformer.
      */
-    public String getTransformerName(String sourceMimetype, long sourceSizeInBytes, String targetMimetype,
-                                     Map<String, String> actualOptions, String renditionName);
+    String getTransformerName(String sourceMimetype, long sourceSizeInBytes, String targetMimetype,
+        Map<String, String> actualOptions, String renditionName);
 }
