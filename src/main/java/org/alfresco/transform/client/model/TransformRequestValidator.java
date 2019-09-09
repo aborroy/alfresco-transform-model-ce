@@ -12,7 +12,7 @@ import org.springframework.validation.Validator;
 
 /**
  * TransformRequestValidator
- * <p/>
+ * <p>
  * Transform request validator
  */
 public class TransformRequestValidator implements Validator
