@@ -19,7 +19,7 @@ import java.util.Set;
 
 /**
  * Mimetype
- * <p/>
+ * <p>
  * The same mimetypes defined in org.alfresco.repo.content.MimetypeMap
  */
 public class Mimetype

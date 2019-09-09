@@ -79,11 +79,13 @@ public abstract class AbstractTransformRegistry implements TransformServiceRegis
     /**
      * Logs an error message if there is an error in the configuration supplied to the
      * {@link #register(Transformer, Map, String, String)}.
+     * @param msg to be logged.
      */
     protected abstract void logError(String msg);
 
     /**
      * Returns the data held by the registry. Sub classes may extend the base Data and replace it at run time.
+     * @return the Data object that contains the registry's data.
      */
     protected abstract Data getData();
 

@@ -31,7 +31,7 @@ public interface TransformServiceRegistry
     /**
      * Works out if the Transform Server should be able to transform content of a given source mimetype and size into a
      * target mimetype given a list of actual transform option names and values (Strings) plus the data contained in the
-     * {@Transform} objects registered with this class.
+     * Transformer objects registered with this class.
      * @param sourceMimetype the mimetype of the source content
      * @param sourceSizeInBytes the size in bytes of the source content. Ignored if negative.
      * @param targetMimetype the mimetype of the target
@@ -40,6 +40,7 @@ public interface TransformServiceRegistry
      *                      results to avoid having to work out if a given transformation is supported a second time.
      *                      The sourceMimetype and sourceSizeInBytes may still change. In the case of ACS this is the
      *                      rendition name.
+     * @return {@code}true{@code} if it is supported.
      */
     boolean isSupported(String sourceMimetype, long sourceSizeInBytes, String targetMimetype,
                         Map<String, String> actualOptions, String transformName);
@@ -62,7 +63,7 @@ public interface TransformServiceRegistry
     /**
      * Works out the name of the transformer (might not map to an actual transformer) that will be used to transform
      * content of a given source mimetype and size into a target mimetype given a list of actual transform option names
-     * and values (Strings) plus the data contained in the {@Transform} objects registered with this class.
+     * and values (Strings) plus the data contained in the Transformer objects registered with this class.
      * @param sourceMimetype the mimetype of the source content
      * @param sourceSizeInBytes the size in bytes of the source content. Ignored if negative.
      * @param targetMimetype the mimetype of the target
@@ -71,6 +72,7 @@ public interface TransformServiceRegistry
      *                      results to avoid having to work out if a given transformation is supported a second time.
      *                      The sourceMimetype and sourceSizeInBytes may still change. In the case of ACS this is the
      *                      rendition name.
+     * @return the name of the transformer or {@code}null{@code} if not set or there is no supported transformer.
      */
     public String getTransformerName(String sourceMimetype, long sourceSizeInBytes, String targetMimetype,
                                      Map<String, String> actualOptions, String renditionName);
