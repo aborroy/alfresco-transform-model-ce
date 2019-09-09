@@ -19,7 +19,9 @@
  * <http://www.gnu.org/licenses/lgpl-3.0.html>.
  * #L%
  */
-package org.alfresco.transform.client.model.config;
+package org.alfresco.transform.client.registry;
+
+import static java.util.Map.Entry;
 
 import java.util.Map;
 
@@ -43,8 +45,13 @@ public interface TransformServiceRegistry
      *                          rendition name.
      * @return {@code}true{@code} if it is supported.
      */
-    boolean isSupported(String sourceMimetype, long sourceSizeInBytes, String targetMimetype,
-        Map<String, String> actualOptions, String transformName);
+    default boolean isSupported(final String sourceMimetype, final long sourceSizeInBytes,
+        final String targetMimetype, final Map<String, String> actualOptions,
+        final String transformName)
+    {
+        long maxSize = getMaxSize(sourceMimetype, targetMimetype, actualOptions, transformName);
+        return maxSize != 0 && (maxSize == -1L || maxSize >= sourceSizeInBytes);
+    }
 
     /**
      * Returns the maximun size (in bytes) of the source content that can be transformed.
@@ -79,4 +86,29 @@ public interface TransformServiceRegistry
      */
     String getTransformerName(String sourceMimetype, long sourceSizeInBytes, String targetMimetype,
         Map<String, String> actualOptions, String renditionName);
+
+    //region [Static methods]
+    static boolean optionsMatch(final Map<String, Boolean> transformOptions,
+        final Map<String, String> actualOptions)
+    {
+        // Check all required transformOptions are supplied
+        final boolean supported = transformOptions
+            .entrySet()
+            .stream()
+            .filter(Entry::getValue)// filter by the required status
+            .map(Entry::getKey)// map to the option name
+            .allMatch(actualOptions::containsKey);
+
+        if (!supported)
+        {
+            return false;
+        }
+
+        // Check there are no extra unused actualOptions
+        return actualOptions
+            .keySet()
+            .stream()
+            .allMatch(transformOptions::containsKey);
+    }
+    //endregion
 }

@@ -5,7 +5,7 @@
  * pursuant to a written agreement and any use of this program without such an
  * agreement is prohibited.
  */
-package org.alfresco.transform.client.model.config;
+package org.alfresco.transform.client.registry;
 
 import static java.util.Arrays.stream;
 import static java.util.Collections.emptyMap;
@@ -15,6 +15,7 @@ import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
+import static org.alfresco.transform.client.registry.TransformServiceRegistry.optionsMatch;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -22,10 +23,15 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.alfresco.transform.client.model.config.SupportedSourceAndTarget;
+import org.alfresco.transform.client.model.config.TransformConfig;
+import org.alfresco.transform.client.model.config.TransformOption;
+import org.alfresco.transform.client.model.config.TransformOptionGroup;
+import org.alfresco.transform.client.model.config.TransformOptionValue;
+import org.alfresco.transform.client.model.config.Transformer;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -111,8 +117,7 @@ public class TransformRegistryTest
             .stream()
             .collect(toMap(identity(), name -> name.toUpperCase().equals(name)));
 
-        boolean supported = registry.isSupported(transformOptions,
-            buildActualOptions(actualOptionNames));
+        boolean supported = optionsMatch(transformOptions, buildActualOptions(actualOptionNames));
         if (isBlank(unsupportedMsg))
         {
             assertTrue("Expected these options to be SUPPORTED", supported);
@@ -437,14 +442,20 @@ public class TransformRegistryTest
         assertEquals(102400L, registry.getMaxSize(DOC, GIF, emptyMap(), "doclib"));
         assertEquals(-1L, registry.getMaxSize(MSG, GIF, emptyMap(), "doclib"));
 
-        // Change the cached value and try and check we are now using the cached value.
-        final List<AbstractTransformRegistry.SupportedTransform> supportedTransforms = registry
-            .getData()
-            .cachedSupportedTransformList
-            .get("doclib")
-            .get(DOC);
-        supportedTransforms.get(0).maxSourceSizeBytes = 1234L;
-        assertEquals(1234L, registry.getMaxSize(DOC, GIF, emptyMap(), "doclib"));
+        // check we are now using the cached value.
+        final SupportedTransform cachedSupportedTransform = new SupportedTransform(
+            new Data(),
+            "name1",
+            emptySet(),
+            Long.MAX_VALUE,
+            0);
+
+        registry.getData()
+                .getCachedSupportedTransformList()
+                .get("doclib")
+                .get(DOC)
+                .add(cachedSupportedTransform);
+        assertEquals(Long.MAX_VALUE, registry.getMaxSize(DOC, GIF, emptyMap(), "doclib"));
     }
 
     @Test
