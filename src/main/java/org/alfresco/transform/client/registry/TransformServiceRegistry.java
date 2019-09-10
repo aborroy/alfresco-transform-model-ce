@@ -21,8 +21,6 @@
  */
 package org.alfresco.transform.client.registry;
 
-import static java.util.Map.Entry;
-
 import java.util.Map;
 
 /**
@@ -86,29 +84,4 @@ public interface TransformServiceRegistry
      */
     String getTransformerName(String sourceMimetype, long sourceSizeInBytes, String targetMimetype,
         Map<String, String> actualOptions, String renditionName);
-
-    //region [Static methods]
-    static boolean optionsMatch(final Map<String, Boolean> transformOptions,
-        final Map<String, String> actualOptions)
-    {
-        // Check all required transformOptions are supplied
-        final boolean supported = transformOptions
-            .entrySet()
-            .stream()
-            .filter(Entry::getValue)// filter by the required status
-            .map(Entry::getKey)// map to the option name
-            .allMatch(actualOptions::containsKey);
-
-        if (!supported)
-        {
-            return false;
-        }
-
-        // Check there are no extra unused actualOptions
-        return actualOptions
-            .keySet()
-            .stream()
-            .allMatch(transformOptions::containsKey);
-    }
-    //endregion
 }

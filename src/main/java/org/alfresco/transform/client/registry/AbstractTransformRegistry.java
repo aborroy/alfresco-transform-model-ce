@@ -21,22 +21,15 @@
  */
 package org.alfresco.transform.client.registry;
 
-import static java.util.Collections.emptyMap;
-import static java.util.Collections.emptySet;
-import static org.alfresco.transform.client.registry.TransformServiceRegistry.optionsMatch;
+import static org.alfresco.transform.client.registry.TransformRegistryHelper.retrieveTransformListBySize;
+import static org.alfresco.transform.client.registry.TransformRegistryHelper.lookupTransformOptions;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.alfresco.transform.client.model.config.TransformConfig;
 import org.alfresco.transform.client.model.config.TransformOption;
-import org.alfresco.transform.client.model.config.TransformOptionGroup;
-import org.alfresco.transform.client.model.config.TransformOptionValue;
 import org.alfresco.transform.client.model.config.Transformer;
 
 /**
@@ -46,8 +39,6 @@ import org.alfresco.transform.client.model.config.Transformer;
  */
 public abstract class AbstractTransformRegistry implements TransformServiceRegistry
 {
-    private static final String TIMEOUT = "timeout";
-
     /**
      * Logs an error message if there is an error in the configuration supplied to the
      * {@link #register(org.alfresco.transform.client.model.config.Transformer, Map, String, String)}.
@@ -90,46 +81,16 @@ public abstract class AbstractTransformRegistry implements TransformServiceRegis
         final Map<String, Set<TransformOption>> transformOptions, final String baseUrl,
         final String readFrom)
     {
-        getData().transformerCount++;
+        getData().incrementTransformerCount();
         transformer
             .getSupportedSourceAndTargetList()
-            .forEach(e -> getData()
-                .getTransformers()
-                .computeIfAbsent(e.getSourceMediaType(), k -> new ConcurrentHashMap<>())
-                .computeIfAbsent(e.getTargetMediaType(), k -> new ArrayList<>())
-                .add(new SupportedTransform(
-                    getData(),
+            .forEach(e -> getData().appendTransform(e.getSourceMediaType(), e.getTargetMediaType(),
+                new SupportedTransform(
                     transformer.getTransformerName(),
                     lookupTransformOptions(transformer.getTransformOptions(), transformOptions,
-                        readFrom),
+                        readFrom, this::logError),
                     e.getMaxSourceSizeBytes(),
                     e.getPriority())));
-    }
-
-    private Set<TransformOption> lookupTransformOptions(final Set<String> transformOptionNames,
-        final Map<String, Set<TransformOption>> transformOptions, final String readFrom)
-    {
-        if (transformOptionNames == null)
-        {
-            return emptySet();
-        }
-
-        final Set<TransformOption> options = new HashSet<>();
-        for (String name : transformOptionNames)
-        {
-            final Set<TransformOption> oneSetOfTransformOptions = transformOptions.get(name);
-            if (oneSetOfTransformOptions == null)
-            {
-                logError("transformOptions in " + readFrom + " with the name " + name +
-                         " does not exist. Ignored");
-                continue;
-            }
-            options.add(new TransformOptionGroup(false, oneSetOfTransformOptions));
-        }
-
-        return options.size() == 1 ?
-               ((TransformOptionGroup) options.iterator().next()).getTransformOptions() :
-               options;
     }
 
     /**
@@ -151,7 +112,8 @@ public abstract class AbstractTransformRegistry implements TransformServiceRegis
         final String targetMimetype, final Map<String, String> actualOptions,
         final String renditionName)
     {
-        return getTransformListBySize(sourceMimetype, targetMimetype, actualOptions, renditionName)
+        return retrieveTransformListBySize(getData(), sourceMimetype, targetMimetype, actualOptions,
+            renditionName)
             .stream()
             .filter(t -> t.getMaxSourceSizeBytes() == -1 ||
                          t.getMaxSourceSizeBytes() >= sourceSizeInBytes)
@@ -164,180 +126,9 @@ public abstract class AbstractTransformRegistry implements TransformServiceRegis
     public long getMaxSize(final String sourceMimetype, final String targetMimetype,
         final Map<String, String> actualOptions, final String renditionName)
     {
-        final List<SupportedTransform> supportedTransforms = getTransformListBySize(sourceMimetype,
-            targetMimetype, actualOptions, renditionName);
+        final List<SupportedTransform> supportedTransforms = retrieveTransformListBySize(getData(),
+            sourceMimetype, targetMimetype, actualOptions, renditionName);
         return supportedTransforms.isEmpty() ? 0 :
                supportedTransforms.get(supportedTransforms.size() - 1).getMaxSourceSizeBytes();
-    }
-
-    // Returns transformers in increasing supported size order, where lower priority transformers for the same size have
-    // been discarded.
-    private List<SupportedTransform> getTransformListBySize(String sourceMimetype,
-        String targetMimetype, Map<String, String> actualOptions, String transformerName)
-    {
-        if (actualOptions == null)
-        {
-            actualOptions = emptyMap();
-        }
-        if (transformerName != null && transformerName.trim().isEmpty())
-        {
-            transformerName = null;
-        }
-
-        final Data data = getData();
-        List<SupportedTransform> transformListBySize =
-            transformerName == null ? null : data.retrieve(transformerName, sourceMimetype);
-        if (transformListBySize != null)
-        {
-            return transformListBySize;
-        }
-
-        // Remove the "timeout" property from the actualOptions as it is not used to select a transformer.
-        if (actualOptions.containsKey(TIMEOUT))
-        {
-            actualOptions = new HashMap<>(actualOptions);
-            actualOptions.remove(TIMEOUT);
-        }
-
-        transformListBySize = new ArrayList<>();
-        final Map<String, List<SupportedTransform>> targetMap = data.getTransformers()
-                                                                    .get(sourceMimetype);
-        if (targetMap != null)
-        {
-            final List<SupportedTransform> supportedTransformList = targetMap.get(targetMimetype);
-            if (supportedTransformList != null)
-            {
-                for (SupportedTransform supportedTransform : supportedTransformList)
-                {
-                    TransformOptionGroup transformOptions = supportedTransform.getTransformOptions();
-                    Map<String, Boolean> possibleTransformOptions = new HashMap<>();
-                    addToPossibleTransformOptions(possibleTransformOptions, transformOptions, true,
-                        actualOptions);
-                    if (optionsMatch(possibleTransformOptions, actualOptions))
-                    {
-                        addToSupportedTransformList(transformListBySize, supportedTransform);
-                    }
-                }
-            }
-        }
-
-        if (transformerName != null)
-        {
-            data.cache(transformerName, sourceMimetype, transformListBySize);
-        }
-
-        return transformListBySize;
-    }
-
-    // Add newTransform to the transformListBySize in increasing size order and discards
-    // lower priority (numerically higher) transforms with a smaller or equal size.
-    private static void addToSupportedTransformList(
-        final List<SupportedTransform> transformListBySize,
-        final SupportedTransform newTransform)
-    {
-        for (int i = 0; i < transformListBySize.size(); i++)
-        {
-            final SupportedTransform existingTransform = transformListBySize.get(i);
-            int added = -1;
-
-            final int compare = compare(newTransform.getMaxSourceSizeBytes(),
-                existingTransform.getMaxSourceSizeBytes());
-            if (compare < 0)
-            {
-                transformListBySize.add(i, newTransform);
-                added = i;
-            }
-            else if (compare == 0)
-            {
-                if (newTransform.getPriority() < existingTransform.getPriority())
-                {
-                    transformListBySize.set(i, newTransform);
-                    added = i;
-                }
-            }
-
-            if (added == i)
-            {
-                for (i--; i >= 0; i--)
-                {
-                    if (newTransform.getPriority() <= transformListBySize.get(i).getPriority())
-                    {
-                        transformListBySize.remove(i);
-                    }
-                }
-                return;
-            }
-        }
-        transformListBySize.add(newTransform);
-    }
-
-    // compare where -1 is unlimited.
-    private static int compare(final long a, final long b)
-    {
-        return a == -1 ? b == -1 ? 0 : 1 : Long.compare(a, b);
-    }
-
-    /**
-     * Flatten out the transform options by adding them to the supplied possibleTransformOptions.</p>
-     *
-     * If possible discards options in the supplied transformOptionGroup if the group is optional and the actualOptions
-     * don't provide any of the options in the group. Or to put it another way:<p/>
-     *
-     * It adds individual transform options from the transformOptionGroup to possibleTransformOptions if the group is
-     * required or if the actualOptions include individual options from the group. As a result it is possible that none
-     * of the group are added if it is optional. It is also possible to add individual transform options that are
-     * themselves required but not in the actualOptions. In this the optionsMatch method will return false.
-     *
-     * @return true if any options were added. Used by nested call parents to determine if an option was added from a
-     * nested sub group.
-     */
-    boolean addToPossibleTransformOptions(final Map<String, Boolean> possibleTransformOptions,
-        final TransformOptionGroup transformOptionGroup, final Boolean parentGroupRequired,
-        final Map<String, String> actualOptions)
-    {
-        boolean added = false;
-        boolean required = false;
-
-        final Set<TransformOption> optionList = transformOptionGroup.getTransformOptions();
-        if (optionList != null && !optionList.isEmpty())
-        {
-            // We need to avoid adding options from a group that is required but its parents are not.
-            boolean transformOptionGroupRequired = transformOptionGroup.isRequired() && parentGroupRequired;
-
-            // Check if the group contains options in actualOptions. This will add any options from sub groups.
-            for (final TransformOption transformOption : optionList)
-            {
-                if (transformOption instanceof TransformOptionGroup)
-                {
-                    added = addToPossibleTransformOptions(possibleTransformOptions,
-                        (TransformOptionGroup) transformOption, transformOptionGroupRequired,
-                        actualOptions);
-                    required |= added;
-                }
-                else
-                {
-                    final String name = ((TransformOptionValue) transformOption).getName();
-                    if (actualOptions.containsKey(name))
-                    {
-                        required = true;
-                    }
-                }
-            }
-
-            if (required || transformOptionGroupRequired)
-            {
-                for (TransformOption transformOption : optionList)
-                {
-                    if (transformOption instanceof TransformOptionValue)
-                    {
-                        added = true;
-                        final TransformOptionValue option = (TransformOptionValue) transformOption;
-                        possibleTransformOptions.put(option.getName(), option.isRequired());
-                    }
-                }
-            }
-        }
-
-        return added;
     }
 }

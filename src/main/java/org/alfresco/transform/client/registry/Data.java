@@ -21,27 +21,47 @@
  */
 package org.alfresco.transform.client.registry;
 
+import static java.util.Collections.emptyMap;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Data
 {
-    private Map<String, Map<String, List<SupportedTransform>>> transformers =
+    // Looks up supported transform routes given source to target media types.
+    private final Map<String, Map<String, List<SupportedTransform>>> transforms =
         new ConcurrentHashMap<>();
-    private Map<String, Map<String, List<SupportedTransform>>> cachedSupportedTransformList =
-        new ConcurrentHashMap<>();
-    protected int transformerCount = 0;
-    protected int transformCount = 0;
 
-    public Map<String, Map<String, List<SupportedTransform>>> getTransformers()
+    // Caches results in the ACS repository implementations which repeatedly make the same request.
+    // Looks up a sorted list of transform routes, for a rendition (if the name is supplied) and the source
+    // media type. Unlike a lookup on the transforms map above, processing of the transform options and priorities
+    // will have already been done if cached.
+    private final Map<String, Map<String, List<SupportedTransform>>> cachedSupportedTransformList =
+        new ConcurrentHashMap<>();
+
+    private int transformerCount = 0;
+    private int transformCount = 0;
+
+    public void incrementTransformerCount()
     {
-        return transformers;
+        transformerCount++;
     }
 
-    public Map<String, Map<String, List<SupportedTransform>>> getCachedSupportedTransformList()
+    public void appendTransform(final String sourceMimetype,
+        final String targetMimetype, final SupportedTransform transform)
     {
-        return cachedSupportedTransformList;
+        transforms
+            .computeIfAbsent(sourceMimetype, k -> new ConcurrentHashMap<>())
+            .computeIfAbsent(targetMimetype, k -> new ArrayList<>())
+            .add(transform);
+        transformCount++;
+    }
+
+    public Map<String, List<SupportedTransform>> retrieveTransforms(final String sourceMimetype)
+    {
+        return transforms.getOrDefault(sourceMimetype, emptyMap());
     }
 
     public void cache(final String transformerName, final String sourceMimetype,
@@ -52,7 +72,7 @@ public class Data
             .put(sourceMimetype, transformListBySize);
     }
 
-    public List<SupportedTransform> retrieve(final String transformerName,
+    public List<SupportedTransform> retrieveCached(final String transformerName,
         final String sourceMimetype)
     {
         return cachedSupportedTransformList

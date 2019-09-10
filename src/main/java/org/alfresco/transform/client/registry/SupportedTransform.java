@@ -34,7 +34,7 @@ public class SupportedTransform
     private final String name;
     private final int priority;
 
-    SupportedTransform(Data data, String name, Set<TransformOption> transformOptions,
+    SupportedTransform(String name, Set<TransformOption> transformOptions,
         long maxSourceSizeBytes, int priority)
     {
         // Logically the top level TransformOptionGroup is required, so that child options are optional or required
@@ -43,7 +43,6 @@ public class SupportedTransform
         this.maxSourceSizeBytes = maxSourceSizeBytes;
         this.name = name;
         this.priority = priority;
-        data.transformCount++;
     }
 
     public TransformOptionGroup getTransformOptions()

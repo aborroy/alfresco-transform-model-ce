@@ -15,7 +15,8 @@ import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
-import static org.alfresco.transform.client.registry.TransformServiceRegistry.optionsMatch;
+import static org.alfresco.transform.client.registry.TransformRegistryHelper.addToPossibleTransformOptions;
+import static org.alfresco.transform.client.registry.TransformRegistryHelper.optionsMatch;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -38,8 +39,8 @@ import org.junit.Test;
 import com.google.common.collect.ImmutableSet;
 
 /**
- * Test the AbstractTransformRegistry, extended by both T-Engines and ACS repository, which need to read JSON config
- * to understand what is supported.
+ * Test the AbstractTransformRegistry, extended by both T-Engines and ACS repository, which need to
+ * read JSON config to understand what is supported.
  *
  * @author adavis
  */
@@ -91,7 +92,7 @@ public class TransformRegistryTest
     {
         final Map<String, Boolean> possibleTransformOptions = new HashMap<>();
 
-        registry.addToPossibleTransformOptions(possibleTransformOptions, transformOptionGroup, true,
+        addToPossibleTransformOptions(possibleTransformOptions, transformOptionGroup, true,
             buildActualOptions(actualOptionNames));
 
         assertEquals("The expected options don't match", expectedNameSet,
@@ -443,17 +444,11 @@ public class TransformRegistryTest
         assertEquals(-1L, registry.getMaxSize(MSG, GIF, emptyMap(), "doclib"));
 
         // check we are now using the cached value.
-        final SupportedTransform cachedSupportedTransform = new SupportedTransform(
-            new Data(),
-            "name1",
-            emptySet(),
-            Long.MAX_VALUE,
-            0);
+        final SupportedTransform cachedSupportedTransform = new SupportedTransform("name1",
+            emptySet(), Long.MAX_VALUE, 0);
 
         registry.getData()
-                .getCachedSupportedTransformList()
-                .get("doclib")
-                .get(DOC)
+                .retrieveCached("doclib", DOC)
                 .add(cachedSupportedTransform);
         assertEquals(Long.MAX_VALUE, registry.getMaxSize(DOC, GIF, emptyMap(), "doclib"));
     }
