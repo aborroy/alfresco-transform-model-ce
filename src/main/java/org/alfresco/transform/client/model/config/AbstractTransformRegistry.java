@@ -42,8 +42,15 @@ public abstract class AbstractTransformRegistry implements TransformServiceRegis
 
     public static class Data
     {
-        ConcurrentMap<String, ConcurrentMap<String, List<SupportedTransform>>> transformers = new ConcurrentHashMap<>();
+        // Looks up supported transform routes given source to target media types.
+        Map<String, Map<String, List<SupportedTransform>>> transformers = new HashMap<>();
+
+        // Caches results in the ACS repository implementations which repeatedly make the same request.
+        // Looks up a sorted list of transform routes, for a rendition (if the name is supplied) and the source
+        // media type. Unlike a lookup on the transforms map above, processing of the transform options and priorities
+        // will have already been done if cached.
         ConcurrentMap<String, ConcurrentMap<String, List<SupportedTransform>>> cachedSupportedTransformList = new ConcurrentHashMap<>();
+
         protected int transformerCount = 0;
         protected int transformCount = 0;
 
@@ -223,7 +230,7 @@ public abstract class AbstractTransformRegistry implements TransformServiceRegis
         }
 
         transformListBySize = new ArrayList<>();
-        ConcurrentMap<String, List<SupportedTransform>> targetMap = data.transformers.get(sourceMimetype);
+        Map<String, List<SupportedTransform>> targetMap = data.transformers.get(sourceMimetype);
         if (targetMap !=  null)
         {
             List<SupportedTransform> supportedTransformList = targetMap.get(targetMimetype);

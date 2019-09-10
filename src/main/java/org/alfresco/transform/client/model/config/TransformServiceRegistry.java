@@ -33,7 +33,7 @@ public interface TransformServiceRegistry
      * target mimetype given a list of actual transform option names and values (Strings) plus the data contained in the
      * Transformer objects registered with this class.
      * @param sourceMimetype the mimetype of the source content
-     * @param sourceSizeInBytes the size in bytes of the source content. Ignored if negative.
+     * @param sourceSizeInBytes the size in bytes of the source content. Ignored if {@code -1}.
      * @param targetMimetype the mimetype of the target
      * @param actualOptions the actual name value pairs available that could be passed to the Transform Service.
      * @param transformName (optional) name for the set of options and target mimetype. If supplied is used to cache
@@ -74,6 +74,6 @@ public interface TransformServiceRegistry
      *                      rendition name.
      * @return the name of the transformer or {@code}null{@code} if not set or there is no supported transformer.
      */
-    public String getTransformerName(String sourceMimetype, long sourceSizeInBytes, String targetMimetype,
+    String getTransformerName(String sourceMimetype, long sourceSizeInBytes, String targetMimetype,
                                      Map<String, String> actualOptions, String renditionName);
 }
