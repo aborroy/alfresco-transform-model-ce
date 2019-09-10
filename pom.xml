@@ -12,7 +12,7 @@
     <groupId>org.alfresco</groupId>
     <artifactId>alfresco-transform-model</artifactId>
     <packaging>jar</packaging>
-    <version>1.0.2.7-SNAPSHOT</version>
+    <version>1.0.2.7-REPO-4639-1-SNAPSHOT</version>
 
 
     <properties>

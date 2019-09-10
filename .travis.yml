@@ -20,6 +20,7 @@ branches:
     - release
     - /^ATS-.*$/
     - /^REPO-.*$/
+    - REPO-4639_custom_release
 
 stages:
   - build
@@ -39,6 +40,6 @@ jobs:
 
     - name: "Release"
       stage: release
-      if: branch = release
+      if: branch = REPO-4639_custom_release
       before_install: bash _ci/init.sh
       script: bash _ci/release.sh
