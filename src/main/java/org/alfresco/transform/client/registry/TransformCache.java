@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Data
+public class TransformCache
 {
     // Looks up supported transform routes given source to target media types.
     private final Map<String, Map<String, List<SupportedTransform>>> transforms =
@@ -41,8 +41,8 @@ public class Data
     private final Map<String, Map<String, List<SupportedTransform>>> cachedSupportedTransformList =
         new ConcurrentHashMap<>();
 
-    private int transformerCount = 0;
-    private int transformCount = 0;
+    protected int transformerCount = 0;
+    protected int transformCount = 0;
 
     public void incrementTransformerCount()
     {
@@ -62,6 +62,11 @@ public class Data
     public Map<String, List<SupportedTransform>> retrieveTransforms(final String sourceMimetype)
     {
         return transforms.getOrDefault(sourceMimetype, emptyMap());
+    }
+
+    public Map<String, Map<String, List<SupportedTransform>>> getTransforms()
+    {
+        return transforms;
     }
 
     public void cache(final String transformerName, final String sourceMimetype,

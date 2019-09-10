@@ -58,7 +58,7 @@ class TransformRegistryHelper
 
     // Returns transformers in increasing supported size order, where lower priority transformers for the same size have
     // been discarded.
-    static List<SupportedTransform> retrieveTransformListBySize(final Data data,
+    static List<SupportedTransform> retrieveTransformListBySize(final TransformCache data,
         final String sourceMimetype, final String targetMimetype,
         Map<String, String> actualOptions, String transformerName)
     {
@@ -93,7 +93,7 @@ class TransformRegistryHelper
     }
 
     private static List<SupportedTransform> buildTransformList(
-        final Data data, final String sourceMimetype, final String targetMimetype,
+        final TransformCache data, final String sourceMimetype, final String targetMimetype,
         final Map<String, String> actualOptions)
     {
         final Map<String, List<SupportedTransform>> targetMap = data.retrieveTransforms(

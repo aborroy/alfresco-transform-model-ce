@@ -34,7 +34,7 @@ import org.alfresco.transform.client.model.config.Transformer;
 
 /**
  * Used to work out if a transformation is supported. Sub classes should implement {@link #getData()} to return an
- * instance of the {@link Data} class. This allows sub classes to periodically replace the registry's data with newer
+ * instance of the {@link TransformCache} class. This allows sub classes to periodically replace the registry's data with newer
  * values. They may also extend the Data class to include extra fields and methods.
  */
 public abstract class AbstractTransformRegistry implements TransformServiceRegistry
@@ -52,7 +52,7 @@ public abstract class AbstractTransformRegistry implements TransformServiceRegis
      *
      * @return the Data object that contains the registry's data.
      */
-    protected abstract Data getData();
+    public abstract TransformCache getData();
 
     /**
      * Registers all the transformer in the transformConfig.
@@ -77,7 +77,7 @@ public abstract class AbstractTransformRegistry implements TransformServiceRegis
      * @param baseUrl          where the transformer was read from when remote.
      * @param readFrom         debug message for log messages, indicating what type of config was read.
      */
-    protected void register(final Transformer transformer,
+    public void register(final Transformer transformer,
         final Map<String, Set<TransformOption>> transformOptions, final String baseUrl,
         final String readFrom)
     {

@@ -46,30 +46,30 @@ import com.google.common.collect.ImmutableSet;
  */
 public class TransformRegistryTest
 {
-    private static final String GIF = "image/gif";
-    private static final String JPEG = "image/jpeg";
-    private static final String PDF = "application/pdf";
-    private static final String DOC = "application/msword";
-    private static final String XLS = "application/vnd.ms-excel";
-    private static final String PPT = "application/vnd.ms-powerpoint";
-    private static final String MSG = "application/vnd.ms-outlook";
-    private static final String TXT = "text/plain";
+    protected static final String GIF = "image/gif";
+    protected static final String JPEG = "image/jpeg";
+    protected static final String PDF = "application/pdf";
+    protected static final String DOC = "application/msword";
+    protected static final String XLS = "application/vnd.ms-excel";
+    protected static final String PPT = "application/vnd.ms-powerpoint";
+    protected static final String MSG = "application/vnd.ms-outlook";
+    protected static final String TXT = "text/plain";
 
-    private AbstractTransformRegistry registry;
-    private Map<String, Set<TransformOption>> mapOfTransformOptions;
+    protected AbstractTransformRegistry registry;
+    protected Map<String, Set<TransformOption>> mapOfTransformOptions;
 
     @Before
-    public void setUp()
+    public void setUp() throws Exception
     {
         registry = buildTransformServiceRegistryImpl();
         mapOfTransformOptions = new HashMap<>();
     }
 
-    private static AbstractTransformRegistry buildTransformServiceRegistryImpl()
+    protected AbstractTransformRegistry buildTransformServiceRegistryImpl() throws Exception
     {
         return new AbstractTransformRegistry()
         {
-            private Data data = new Data();
+            private TransformCache data = new TransformCache();
 
             @Override
             protected void logError(String msg)
@@ -79,7 +79,7 @@ public class TransformRegistryTest
             }
 
             @Override
-            protected Data getData()
+            public TransformCache getData()
             {
                 return data;
             }
@@ -130,7 +130,7 @@ public class TransformRegistryTest
         }
     }
 
-    private void assertTransformOptions(Set<TransformOption> setOfTransformOptions)
+    private void assertTransformOptions(Set<TransformOption> setOfTransformOptions) throws Exception
     {
         final Transformer transformer = new Transformer("name", singleton("testOptions"), set(
             new SupportedSourceAndTarget(DOC, TXT, -1),
@@ -157,7 +157,7 @@ public class TransformRegistryTest
 
     private void assertTransformerName(String sourceMimetype, long sourceSizeInBytes,
         String targetMimetype, Map<String, String> actualOptions, String expectedTransformerName,
-        Transformer... transformers)
+        Transformer... transformers) throws Exception
     {
         buildAndPopulateRegistry(transformers);
         String transformerName = registry.getTransformerName(sourceMimetype, sourceSizeInBytes,
@@ -169,7 +169,7 @@ public class TransformRegistryTest
 
     private void assertSupported(final Transformer transformer, final String sourceMimetype,
         final long sourceSizeInBytes, final String targetMimetype,
-        final Map<String, String> actualOptions, final String unsupportedMsg)
+        final Map<String, String> actualOptions, final String unsupportedMsg) throws Exception
     {
         assertSupported(sourceMimetype, sourceSizeInBytes, targetMimetype, actualOptions,
             unsupportedMsg, transformer);
@@ -177,21 +177,21 @@ public class TransformRegistryTest
 
     private void assertSupported(String sourceMimetype, long sourceSizeInBytes,
         String targetMimetype, Map<String, String> actualOptions, String unsupportedMsg,
-        Transformer... transformers)
+        Transformer... transformers) throws Exception
     {
         buildAndPopulateRegistry(transformers);
         assertSupported(sourceMimetype, sourceSizeInBytes, targetMimetype, actualOptions, null,
             unsupportedMsg);
     }
 
-    private void buildAndPopulateRegistry(Transformer[] transformers)
+    private void buildAndPopulateRegistry(Transformer[] transformers) throws Exception
     {
         registry = buildTransformServiceRegistryImpl();
         stream(transformers)
             .forEach(t -> registry.register(t, mapOfTransformOptions, null, getClass().getName()));
     }
 
-    private void assertSupported(String sourceMimetype, long sourceSizeInBytes,
+    protected void assertSupported(String sourceMimetype, long sourceSizeInBytes,
         String targetMimetype, Map<String, String> actualOptions, String renditionName,
         String unsupportedMsg)
     {
@@ -379,7 +379,7 @@ public class TransformRegistryTest
     }
 
     @Test
-    public void testNoActualOptions()
+    public void testNoActualOptions() throws Exception
     {
         assertTransformOptions(set(
             new TransformOptionValue(false, "option1"),
@@ -387,14 +387,14 @@ public class TransformRegistryTest
     }
 
     @Test
-    public void testNoTransformOptions()
+    public void testNoTransformOptions() throws Exception
     {
         assertTransformOptions(emptySet());
         assertTransformOptions(null);
     }
 
     @Test
-    public void testSupported()
+    public void testSupported() throws Exception
     {
         mapOfTransformOptions.put("options1", set(
             new TransformOptionValue(false, "page"),
@@ -454,7 +454,7 @@ public class TransformRegistryTest
     }
 
     @Test
-    public void testGetTransformerName()
+    public void testGetTransformerName() throws Exception
     {
         Transformer t1 = new Transformer("transformer1", null,
             singleton(new SupportedSourceAndTarget(MSG, GIF, 100, 50)));
@@ -483,7 +483,7 @@ public class TransformRegistryTest
     }
 
     @Test
-    public void testMultipleTransformers()
+    public void testMultipleTransformers() throws Exception
     {
         mapOfTransformOptions.put("options1", set(
             new TransformOptionValue(false, "page"),
