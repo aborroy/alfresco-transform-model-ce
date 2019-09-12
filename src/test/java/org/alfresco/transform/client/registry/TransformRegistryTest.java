@@ -156,7 +156,7 @@ public class TransformRegistryTest
             .build();
 
         registry = buildTransformServiceRegistryImpl();
-        registry.registerAll(transformConfig, null, getClass().getName());
+        registry.registerAll(transformConfig, getBaseUrl(transformer), getClass().getName());
 
         assertTrue(registry.isSupported(XLS, 1024, TXT, emptyMap(), null));
         assertTrue(registry.isSupported(XLS, 1024000, TXT, null, null));
@@ -202,7 +202,7 @@ public class TransformRegistryTest
     {
         registry = buildTransformServiceRegistryImpl();
         stream(transformers)
-            .forEach(t -> registry.register(t, mapOfTransformOptions, null, getClass().getName()));
+            .forEach(t -> registry.register(t, mapOfTransformOptions, getBaseUrl(t), getClass().getName()));
     }
 
     protected void assertSupported(String sourceMimetype, long sourceSizeInBytes,
@@ -449,7 +449,7 @@ public class TransformRegistryTest
             new SupportedSourceAndTarget(DOC, GIF, 102400),
             new SupportedSourceAndTarget(MSG, GIF, -1)));
 
-        registry.register(transformer, mapOfTransformOptions, null, getClass().getName());
+        registry.register(transformer, mapOfTransformOptions, getBaseUrl(transformer), getClass().getName());
 
         assertSupported(DOC, 1024, GIF, emptyMap(), "doclib", "");
         assertSupported(MSG, 1024, GIF, emptyMap(), "doclib", "");
