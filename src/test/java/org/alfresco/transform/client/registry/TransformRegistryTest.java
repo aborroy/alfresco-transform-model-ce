@@ -156,7 +156,7 @@ public class TransformRegistryTest
             .build();
 
         registry = buildTransformServiceRegistryImpl();
-        registry.register(transformConfig, null, getClass().getName());
+        registry.registerAll(transformConfig, null, getClass().getName());
 
         assertTrue(registry.isSupported(XLS, 1024, TXT, emptyMap(), null));
         assertTrue(registry.isSupported(XLS, 1024000, TXT, null, null));
@@ -174,7 +174,7 @@ public class TransformRegistryTest
         Transformer... transformers) throws Exception
     {
         buildAndPopulateRegistry(transformers);
-        String transformerName = registry.getTransformerName(sourceMimetype, sourceSizeInBytes,
+        String transformerName = registry.findTransformerName(sourceMimetype, sourceSizeInBytes,
             targetMimetype, actualOptions, null);
         assertEquals(
             sourceMimetype + " to " + targetMimetype + " should have returned " + expectedTransformerName,
@@ -454,17 +454,17 @@ public class TransformRegistryTest
         assertSupported(DOC, 1024, GIF, emptyMap(), "doclib", "");
         assertSupported(MSG, 1024, GIF, emptyMap(), "doclib", "");
 
-        assertEquals(102400L, registry.getMaxSize(DOC, GIF, emptyMap(), "doclib"));
-        assertEquals(-1L, registry.getMaxSize(MSG, GIF, emptyMap(), "doclib"));
+        assertEquals(102400L, registry.findMaxSize(DOC, GIF, emptyMap(), "doclib"));
+        assertEquals(-1L, registry.findMaxSize(MSG, GIF, emptyMap(), "doclib"));
 
         // check we are now using the cached value.
         final SupportedTransform cachedSupportedTransform = new SupportedTransform("name1",
-            emptySet(), Long.MAX_VALUE, 0);
+            emptySet(), 999999L, 0);
 
         registry.getData()
                 .retrieveCached("doclib", DOC)
                 .add(cachedSupportedTransform);
-        assertEquals(Long.MAX_VALUE, registry.getMaxSize(DOC, GIF, emptyMap(), "doclib"));
+        assertEquals(999999L, registry.findMaxSize(DOC, GIF, emptyMap(), "doclib"));
     }
 
     @Test

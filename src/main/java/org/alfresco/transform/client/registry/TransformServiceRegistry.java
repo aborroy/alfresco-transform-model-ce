@@ -47,7 +47,7 @@ public interface TransformServiceRegistry
         final String targetMimetype, final Map<String, String> actualOptions,
         final String transformName)
     {
-        long maxSize = getMaxSize(sourceMimetype, targetMimetype, actualOptions, transformName);
+        long maxSize = findMaxSize(sourceMimetype, targetMimetype, actualOptions, transformName);
         return maxSize != 0 && (maxSize == -1L || maxSize >= sourceSizeInBytes);
     }
 
@@ -64,7 +64,7 @@ public interface TransformServiceRegistry
      * @return the maximum size (in bytes) of the source content that can be transformed. If {@code -1} there is no
      * limit, but if {@code 0} the transform is not supported.
      */
-    long getMaxSize(String sourceMimetype, String targetMimetype, Map<String, String> actualOptions,
+    long findMaxSize(String sourceMimetype, String targetMimetype, Map<String, String> actualOptions,
         String transformName);
 
     /**
@@ -82,6 +82,6 @@ public interface TransformServiceRegistry
      *                          rendition name.
      * @return the name of the transformer or {@code}null{@code} if not set or there is no supported transformer.
      */
-    String getTransformerName(String sourceMimetype, long sourceSizeInBytes, String targetMimetype,
+    String findTransformerName(String sourceMimetype, long sourceSizeInBytes, String targetMimetype,
         Map<String, String> actualOptions, String renditionName);
 }

@@ -285,7 +285,7 @@ class TransformRegistryHelper
         return options
             .entrySet()
             .stream()
-            .filter(e -> TIMEOUT.equals(e.getKey()))
+            .filter(e -> !TIMEOUT.equals(e.getKey()))
             .collect(toMap(Entry::getKey, Entry::getValue));
     }
 }

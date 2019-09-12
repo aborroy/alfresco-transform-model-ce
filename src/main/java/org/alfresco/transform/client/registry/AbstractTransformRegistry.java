@@ -61,7 +61,7 @@ public abstract class AbstractTransformRegistry implements TransformServiceRegis
      * @param baseUrl         where the config can be read from. Only needed when it is remote. Is null when local.
      * @param readFrom        debug message for log messages, indicating what type of config was read.
      */
-    public void register(final TransformConfig transformConfig, final String baseUrl,
+    protected void registerAll(final TransformConfig transformConfig, final String baseUrl,
         final String readFrom)
     {
         transformConfig
@@ -108,7 +108,7 @@ public abstract class AbstractTransformRegistry implements TransformServiceRegis
      *                          rendition name.
      */
     @Override
-    public String getTransformerName(final String sourceMimetype, final long sourceSizeInBytes,
+    public String findTransformerName(final String sourceMimetype, final long sourceSizeInBytes,
         final String targetMimetype, final Map<String, String> actualOptions,
         final String renditionName)
     {
@@ -123,7 +123,7 @@ public abstract class AbstractTransformRegistry implements TransformServiceRegis
     }
 
     @Override
-    public long getMaxSize(final String sourceMimetype, final String targetMimetype,
+    public long findMaxSize(final String sourceMimetype, final String targetMimetype,
         final Map<String, String> actualOptions, final String renditionName)
     {
         final List<SupportedTransform> supportedTransforms = retrieveTransformListBySize(getData(),
