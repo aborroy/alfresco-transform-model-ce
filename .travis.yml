@@ -17,7 +17,6 @@ cache:
 branches:
   only:
     - master
-    - release
     - /^ATS-.*$/
     - /^REPO-.*$/
 
@@ -39,6 +38,6 @@ jobs:
 
     - name: "Release"
       stage: release
-      if: branch = release
+      if: commit_message ~= /\[trigger release\]/ AND branch = master
       before_install: bash _ci/init.sh
       script: bash _ci/release.sh
