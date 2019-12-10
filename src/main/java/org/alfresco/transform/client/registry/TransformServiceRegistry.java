@@ -21,13 +21,15 @@
  */
 package org.alfresco.transform.client.registry;
 
+import org.alfresco.transform.exceptions.TransformException;
+
+import java.io.File;
 import java.util.Map;
 
 /**
  * Used by clients work out if a transformation is supported by a Transform Service.
  */
-public interface TransformServiceRegistry
-{
+public interface TransformServiceRegistry {
     /**
      * Works out if the Transform Server should be able to transform content of a given source mimetype and size into a
      * target mimetype given a list of actual transform option names and values (Strings) plus the data contained in the
@@ -44,9 +46,8 @@ public interface TransformServiceRegistry
      * @return {@code}true{@code} if it is supported.
      */
     default boolean isSupported(final String sourceMimetype, final long sourceSizeInBytes,
-        final String targetMimetype, final Map<String, String> actualOptions,
-        final String transformName)
-    {
+                                final String targetMimetype, final Map<String, String> actualOptions,
+                                final String transformName) {
         long maxSize = findMaxSize(sourceMimetype, targetMimetype, actualOptions, transformName);
         return maxSize != 0 && (maxSize == -1L || maxSize >= sourceSizeInBytes);
     }
@@ -65,7 +66,7 @@ public interface TransformServiceRegistry
      * limit, but if {@code 0} the transform is not supported.
      */
     long findMaxSize(String sourceMimetype, String targetMimetype, Map<String, String> actualOptions,
-        String transformName);
+                     String transformName);
 
     /**
      * Works out the name of the transformer (might not map to an actual transformer) that will be used to transform
@@ -83,5 +84,16 @@ public interface TransformServiceRegistry
      * @return the name of the transformer or {@code}null{@code} if not set or there is no supported transformer.
      */
     String findTransformerName(String sourceMimetype, long sourceSizeInBytes, String targetMimetype,
-        Map<String, String> actualOptions, String renditionName);
+                               Map<String, String> actualOptions, String renditionName);
+
+    default String getTransformerName(final File sourceFile, final String sourceMimetype,
+                                      final String targetMimetype, final Map<String, String> transformOptions) {
+        final long sourceSizeInBytes = sourceFile.length();
+        final String transformerName = findTransformerName(sourceMimetype,
+                sourceSizeInBytes, targetMimetype, transformOptions, null);
+        if (transformerName == null) {
+            throw new TransformException(400, "No transforms were able to handle the request"); // BAD_REQUEST
+        }
+        return transformerName;
+    }
 }
