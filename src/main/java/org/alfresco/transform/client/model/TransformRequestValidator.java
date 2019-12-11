@@ -49,12 +49,12 @@ public class TransformRequestValidator implements Validator
         else
         {
             String requestId = request.getRequestId();
-            if (requestId == null || requestId.isEmpty())
+            if (requestId == null || requestId.isBlank())
             {
                 errors.rejectValue("requestId", null, "requestId cannot be null or empty");
             }
             String sourceReference = request.getSourceReference();
-            if (sourceReference == null || sourceReference.isEmpty())
+            if (sourceReference == null || sourceReference.isBlank())
             {
                 errors.rejectValue("sourceReference", null,
                     "sourceReference cannot be null or empty");
@@ -66,25 +66,25 @@ public class TransformRequestValidator implements Validator
                     "sourceSize cannot be null or have its value smaller than 0");
             }
             String sourceMediaType = request.getSourceMediaType();
-            if (sourceMediaType == null || sourceMediaType.isEmpty())
+            if (sourceMediaType == null || sourceMediaType.isBlank())
             {
                 errors.rejectValue("sourceMediaType", null,
                     "sourceMediaType cannot be null or empty");
             }
             String targetMediaType = request.getTargetMediaType();
-            if (targetMediaType == null || targetMediaType.isEmpty())
+            if (targetMediaType == null || targetMediaType.isBlank())
             {
                 errors.rejectValue("targetMediaType", null,
                     "targetMediaType cannot be null or empty");
             }
             String targetExtension = request.getTargetExtension();
-            if (targetExtension == null || targetExtension.isEmpty())
+            if (targetExtension == null || targetExtension.isBlank())
             {
                 errors.rejectValue("targetExtension", null,
                     "targetExtension cannot be null or empty");
             }
             String clientData = request.getClientData();
-            if (clientData == null || clientData.isEmpty())
+            if (clientData == null || clientData.isBlank())
             {
                 errors.rejectValue("clientData", String.valueOf(request.getSchema()),
                     "clientData cannot be null or empty");
