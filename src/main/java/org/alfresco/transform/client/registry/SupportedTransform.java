@@ -82,5 +82,11 @@ public class SupportedTransform
     {
         return Objects.hash(transformOptions, maxSourceSizeBytes, name, priority);
     }
+
+    @Override
+    public String toString()
+    {
+        return name + ':' + maxSourceSizeBytes + ':' + priority;
+    }
 }
 

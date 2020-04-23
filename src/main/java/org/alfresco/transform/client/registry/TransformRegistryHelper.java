@@ -136,40 +136,106 @@ class TransformRegistryHelper
         final List<SupportedTransform> transformListBySize,
         final SupportedTransform newTransform)
     {
-        for (int i = 0; i < transformListBySize.size(); i++)
+        if (transformListBySize.isEmpty())
         {
-            final SupportedTransform existingTransform = transformListBySize.get(i);
-            int added = -1;
+            transformListBySize.add(newTransform);
+        }
+        else
+        {
+            for (int i = 0; i < transformListBySize.size(); i++)
+            {
+                final SupportedTransform existingTransform = transformListBySize.get(i);
+                final int compareMaxSize = compareMaxSize(newTransform.getMaxSourceSizeBytes(),
+                        existingTransform.getMaxSourceSizeBytes());
+                final int comparePriority = existingTransform.getPriority() - newTransform.getPriority();
 
-            final int compare = compare(newTransform.getMaxSourceSizeBytes(),
-                existingTransform.getMaxSourceSizeBytes());
-            if (compare < 0)
-            {
-                transformListBySize.add(i, newTransform);
-                added = i;
-            }
-            else if (compare == 0)
-            {
-                if (newTransform.getPriority() < existingTransform.getPriority())
+                if (compareMaxSize == 0)
                 {
-                    transformListBySize.set(i, newTransform);
-                    added = i;
-                }
-            }
-
-            if (added == i)
-            {
-                for (i--; i >= 0; i--)
-                {
-                    if (newTransform.getPriority() <= transformListBySize.get(i).getPriority())
+                    if (comparePriority == 0)
                     {
-                        transformListBySize.remove(i);
+                        // If same priority and size limit, replace with the newer transform.
+                        // It is possibly a replacement in an extension.
+                        transformListBySize.set(i, newTransform);
+                        break;
+                    }
+                    else if (comparePriority > 0)
+                    {
+                        // Replace as newer one is higher priority and try to discard some existing ones.
+                        transformListBySize.set(i, newTransform);
+                        discardFromSupportedTransformList(transformListBySize, i);
+                        break;
+                    }
+                    else
+                    {
+                        // Ignore as lower priority
+                        break;
                     }
                 }
-                return;
+                else if (compareMaxSize < 0)
+                {
+                    if (comparePriority > 0)
+                    {
+                        // If higher priority insert and try to discard some existing ones.
+                        transformListBySize.add(i, newTransform);
+                        discardFromSupportedTransformList(transformListBySize, i);
+                        break;
+                    }
+                    else
+                    {
+                        // Ignore the newer one as its priority is lower or the same as one that has a higher size limit
+                        break;
+                    }
+                }
+                else // if (compareMaxSize > 0)
+                {
+                    if (comparePriority < 0)
+                    {
+                        if (i+1 < transformListBySize.size())
+                        {
+                            // Look at the next element as size is higher but the priority is lower.
+                            continue;
+                        }
+                        else
+                        {
+                            // Append to the list as the size is higher but the priority is lower.
+                            transformListBySize.add(newTransform);
+                            break;
+                        }
+                    }
+                    // Else same or better priority and higher size limit, so replace with the newer transform and try
+                    // to discard some existing ones.
+                    transformListBySize.set(i, newTransform);
+                    discardFromSupportedTransformList(transformListBySize, i);
+                    break;
+                }
             }
         }
-        transformListBySize.add(newTransform);
+    }
+
+    // Starting at i+1, try to remove transforms that will not be used.
+    private static void discardFromSupportedTransformList(List<SupportedTransform> transformListBySize, int i)
+    {
+        SupportedTransform newTransform = transformListBySize.get(i++);
+        while (i < transformListBySize.size())
+        {
+            final SupportedTransform existingTransform = transformListBySize.get(i);
+            final int compareMaxSize = compareMaxSize(newTransform.getMaxSourceSizeBytes(),
+                    existingTransform.getMaxSourceSizeBytes());
+            final int comparePriority = existingTransform.getPriority() - newTransform.getPriority();
+
+            // Discard those with
+            // 1) the same priority but support a smaller size
+            // 2) those with a lower priority and a smaller size
+            if ((comparePriority == 0 && compareMaxSize >= 0) ||
+                (comparePriority > 0 && compareMaxSize >= 0))
+            {
+                transformListBySize.remove(i);
+            }
+            else
+            {
+                break;
+            }
+        }
     }
 
     private static Map<String, Boolean> gatherPossibleTransformOptions(
@@ -247,9 +313,9 @@ class TransformRegistryHelper
     }
 
     // compare where -1 is unlimited.
-    private static int compare(final long a, final long b)
+    private static int compareMaxSize(final long a, final long b)
     {
-        return a == -1 ? b == -1 ? 0 : 1 : Long.compare(a, b);
+        return a == -1 ? b == -1 ? 0 : 1 : b == -1 ? -1 : Long.compare(a, b);
     }
 
     static boolean optionsMatch(final Map<String, Boolean> transformOptions,
