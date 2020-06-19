@@ -307,6 +307,23 @@ public class Mimetype
 
     //region  Alfresco
     public static final String MIMETYPE_ACP = "application/acp";
+
+    //region other
+    public static final String MIMETYPE_PBM = "image/x-portable-bitmap";
+
+    public static final String MIMETYPE_PNM = "image/x-portable-anymap";
+
+    public static final String MIMETYPE_XBM = "image/x-xbitmap";
+
+    public static final String MIMETYPE_XPM = "image/x-xpixmap";
+
+    public static final String MIMETYPE_Z = "application/x-compress";
+
+    public static final String MIMETYPE_PPM = "image/x-portable-pixmap";
+
+    public static final String MIMETYPE_TAR = "application/x-tar";
+
+    public static final String MIMETYPE_OGG = "application/ogg";
     //endregion
 
     private static final Set<String> ALL_MIMETYPES;
