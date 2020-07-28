@@ -26,6 +26,7 @@
  */
 package org.alfresco.transform.client.registry;
 
+import org.alfresco.transform.exceptions.TransformException;
 import org.junit.Test;
 
 import java.util.List;
@@ -33,6 +34,7 @@ import java.util.List;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptySet;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public class TransformRegistryHelperTest
 {
@@ -154,4 +156,30 @@ public class TransformRegistryHelperTest
         return supportedTransforms.isEmpty() ? 0 :
                 supportedTransforms.get(supportedTransforms.size() - 1).getMaxSourceSizeBytes();
     }
+
+  @Test(expected=TransformException.class)
+  public void buildTransformListSourceMimeTypeNullErrorTest()
+  {
+    TransformRegistryHelper helper = new TransformRegistryHelper();
+    TransformCache data = new TransformCache();
+
+    List<SupportedTransform> supportedTransforms = helper.retrieveTransformListBySize(data,
+           null, "application/pdf", null, null);
+
+    fail("No exception raised");
+  }
+
+  @Test(expected=TransformException.class)
+  public void buildTransformListTargetMimeTypeNullErrorTest()
+  {
+    TransformRegistryHelper helper = new TransformRegistryHelper();
+    TransformCache data = new TransformCache();
+
+    List<SupportedTransform> supportedTransforms = helper.retrieveTransformListBySize(data,
+            "text/plain", null, null, null);
+
+    fail("No exception raised");
+  }
+
+
 }

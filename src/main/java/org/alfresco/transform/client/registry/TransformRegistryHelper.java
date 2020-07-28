@@ -38,6 +38,7 @@ import java.util.function.Consumer;
 import org.alfresco.transform.client.model.config.TransformOption;
 import org.alfresco.transform.client.model.config.TransformOptionGroup;
 import org.alfresco.transform.client.model.config.TransformOptionValue;
+import org.alfresco.transform.exceptions.TransformException;
 
 class TransformRegistryHelper
 {
@@ -110,8 +111,20 @@ class TransformRegistryHelper
         final TransformCache data, final String sourceMimetype, final String targetMimetype,
         final Map<String, String> actualOptions)
     {
+
+        if(sourceMimetype == null)
+        {
+          throw new TransformException(400, "Null value provided for sourceMimetype, please provide a value");
+        }
+
+        if(targetMimetype == null)
+        {
+          throw new TransformException(400, "Null value provided for tragetMimetype, please provide a value");
+        }
+
         final Map<String, List<SupportedTransform>> targetMap = data.retrieveTransforms(
             sourceMimetype);
+
         final List<SupportedTransform> supportedTransformList = targetMap.getOrDefault(
             targetMimetype, emptyList());
 
