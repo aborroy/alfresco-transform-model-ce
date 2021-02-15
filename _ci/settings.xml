@@ -7,6 +7,15 @@
             </activation>
             <repositories>
                 <repository>
+                    <id>central</id>
+                    <name>Central Repository</name>
+                    <url>https://repo.maven.apache.org/maven2</url>
+                    <layout>default</layout>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                </repository>
+                <repository>
                     <id>alfresco-internal</id>
                     <name>Alfresco Internal Repository</name>
                     <url>https://artifacts.alfresco.com/nexus/content/groups/internal</url>
@@ -75,6 +84,11 @@
             <id>quay.io</id>
             <username>alfresco+bamboo</username>
             <password>${env.QUAY_PASSWORD}</password>
+        </server>
+        <server>
+            <id>docker.io</id>
+            <username>alfrescosystem</username>
+            <password>${env.DOCKERHUB_PASSWORD}</password>
         </server>
     </servers>
 </settings>
