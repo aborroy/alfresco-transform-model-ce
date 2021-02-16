@@ -10,10 +10,9 @@ pushd "$(dirname "${BASH_SOURCE[0]}")/../"
 [ "${TRAVIS_PULL_REQUEST}" = "false" ] && [ "${TRAVIS_BRANCH}" = "master" ] && DEPLOY="deploy" || DEPLOY="install"
 
 
-mvn -B -U clean ${DEPLOY}
+mvn -B -U clean ${DEPLOY} -Dmaven.wagon.http.pool=false
 
 
 popd
 set +vex
 echo "=========================== Finishing Build&Test Script =========================="
-
